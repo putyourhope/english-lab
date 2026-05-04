@@ -231,6 +231,11 @@
     color:var(--text-secondary); line-height:1.6;
   }
 
+  /* ── Clickable words ── */
+  .w { cursor:pointer; border-radius:3px; transition:background 0.15s; }
+  .w:hover { background:var(--accent-glow); }
+  .w:active { background:rgba(16,185,129,0.25); }
+
   /* ── Tooltip ── */
   .tooltip {
     display:none; position:fixed; z-index:1000; background:var(--bg-white);
@@ -572,12 +577,15 @@ function renderSidebar() {
       ${i+1}
     </button>`).join('');
 }
+function wrapWords(text) {
+  return text.replace(/(\S+)/g, (m) => `<span class="w">${esc(m)}</span>`);
+}
 function renderArticle() {
   const a = articles[currentDay];
   const pairs = a.content;
   const paras = []; let buf = [];
   pairs.forEach((p,i) => {
-    buf.push(currentTab === 'en' ? p.en : p.ko);
+    buf.push(wrapWords(currentTab === 'en' ? p.en : p.ko));
     if ((i+1)%3===0 || i===pairs.length-1) { paras.push(buf.join(' ')); buf=[]; }
   });
   let html = paras.map(p=>`<p>${p}</p>`).join('');
@@ -671,43 +679,36 @@ function correctSentence(idx) {
 
 // ── Tooltip ──
 function hideTooltip() { document.getElementById('tooltip').classList.remove('show'); }
-function tryShowTooltip() {
-  const sel = window.getSelection();
-  const word = sel.toString().trim();
-  if (!word || word.includes(' ') || !sel.rangeCount) return;
-
-  const range = sel.getRangeAt(0);
-  const container = document.getElementById('articleContent');
-  if (!container || !container.contains(range.commonAncestorContainer)) return;
-
-  const match = findMatchInPairs(word);
-  if (!match) return;
-
-  selectedWord = match.displayWord;
-  selectedMeaning = match.meaning;
-  selectedContext = '';
-
-  const tip = document.getElementById('tooltip');
-  document.getElementById('tooltipWord').textContent = selectedWord;
-  document.getElementById('tooltipMeaning').textContent = selectedMeaning;
-
-  const rect = range.getBoundingClientRect();
-  let left = rect.left + rect.width/2 - 120, top = rect.bottom + 10;
-  if (left < 10) left = 10;
-  if (left + 260 > window.innerWidth) left = window.innerWidth - 270;
-  if (top + 160 > window.innerHeight) top = rect.top - 140;
-  tip.style.left = left+'px'; tip.style.top = top+'px';
-  tip.classList.add('show');
-}
 document.addEventListener('DOMContentLoaded', () => {
-  // Desktop: double-click
-  document.getElementById('articleContent').addEventListener('dblclick', tryShowTooltip);
-  // Mobile: long-press selects text, then touchend fires
-  document.getElementById('articleContent').addEventListener('touchend', function() {
-    setTimeout(tryShowTooltip, 100);
+  document.getElementById('articleContent').addEventListener('click', function(e) {
+    const span = e.target.closest('.w');
+    if (!span) { hideTooltip(); return; }
+
+    const raw = span.textContent.trim();
+    const word = raw.replace(/[^a-zA-Z0-9가-힣ㄱ-ㅎㅏ-ㅣ]/g, '');
+    if (!word) return;
+
+    const match = findMatchInPairs(word);
+    if (!match) { hideTooltip(); return; }
+
+    selectedWord = match.displayWord;
+    selectedMeaning = match.meaning;
+    selectedContext = '';
+
+    const tip = document.getElementById('tooltip');
+    document.getElementById('tooltipWord').textContent = selectedWord;
+    document.getElementById('tooltipMeaning').textContent = selectedMeaning;
+
+    const rect = span.getBoundingClientRect();
+    let left = rect.left + rect.width/2 - 120, top = rect.bottom + 10;
+    if (left < 10) left = 10;
+    if (left + 260 > window.innerWidth) left = window.innerWidth - 270;
+    if (top + 160 > window.innerHeight) top = rect.top - 140;
+    tip.style.left = left+'px'; tip.style.top = top+'px';
+    tip.classList.add('show');
   });
   document.addEventListener('click', function(e) {
-    if (!e.target.closest('.tooltip') && !window.getSelection().toString().trim()) hideTooltip();
+    if (!e.target.closest('.tooltip') && !e.target.closest('.w')) hideTooltip();
   });
 });
 
