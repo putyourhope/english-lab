@@ -62,6 +62,7 @@
     color:#fff; letter-spacing:-0.5px;
   }
   .header h1 { font-size:15px; font-weight:700; letter-spacing:-0.3px; }
+  .header-right { display:flex; align-items:center; gap:8px; }
   .btn-icon {
     width:36px; height:36px; background:var(--bg-white); border:1px solid var(--border);
     border-radius:var(--radius-sm); color:var(--text-secondary);
@@ -73,30 +74,25 @@
 
   /* ── Layout ── */
   .layout { display:flex; flex:1; overflow:hidden; }
+
+  /* ── Sidebar (number-only pills) ── */
   .sidebar {
-    width:180px; background:var(--bg-white); border-right:1px solid var(--border);
-    display:flex; flex-direction:column; padding:8px 6px; gap:2px;
-    overflow-y:auto; flex-shrink:0;
+    width:60px; background:var(--bg-white); border-right:1px solid var(--border);
+    display:flex; flex-direction:column; align-items:center;
+    padding:12px 0; gap:8px; overflow-y:auto; flex-shrink:0;
   }
   .sidebar::-webkit-scrollbar { width:0; }
   .sidebar-item {
-    width:100%; display:flex; align-items:center; gap:8px;
-    padding:9px 10px; border-radius:var(--radius-sm); border:none;
-    background:transparent; color:var(--text-secondary); font-size:12px;
-    font-weight:500; cursor:pointer; transition:var(--transition);
-    text-align:left; line-height:1.3;
+    width:40px; height:40px; border-radius:50%; border:2px solid var(--border);
+    background:var(--bg-white); color:var(--text-secondary);
+    font-size:14px; font-weight:700; cursor:pointer;
+    transition:var(--transition); display:grid; place-items:center;
   }
-  .sidebar-item:hover { background:var(--bg-hover); color:var(--text-primary); transform:translateY(-2px); }
+  .sidebar-item:hover { border-color:var(--accent); color:var(--accent); background:var(--accent-light); transform:translateY(-2px); }
   .sidebar-item:active { transform:translateY(1px); }
-  .sidebar-item.active { background:var(--accent); color:#fff; box-shadow:0 2px 8px var(--accent-glow); animation:popIn 0.3s var(--spring); }
-  .sidebar-num {
-    width:22px; height:22px; border-radius:50%; font-size:10px; font-weight:700;
-    display:grid; place-items:center; flex-shrink:0;
-    background:var(--accent-light); color:var(--accent);
-  }
-  .sidebar-item.active .sidebar-num { background:rgba(255,255,255,0.25); color:#fff; }
-  .sidebar-title {
-    flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  .sidebar-item.active {
+    background:var(--accent); color:#fff; border-color:var(--accent);
+    box-shadow:0 3px 12px var(--accent-glow); animation:popIn 0.3s var(--spring);
   }
 
   .main { display:flex; flex:1; overflow:hidden; }
@@ -239,12 +235,11 @@
   .tooltip {
     display:none; position:fixed; z-index:1000; background:var(--bg-white);
     border:1px solid var(--border); border-radius:var(--radius);
-    padding:14px 16px; box-shadow:var(--shadow-lg); min-width:220px; max-width:280px;
+    padding:14px 16px; box-shadow:var(--shadow-lg); min-width:180px; max-width:260px;
   }
   .tooltip.show { display:block; animation:popIn 0.35s var(--spring); }
   .tooltip-word { font-size:16px; font-weight:700; color:var(--accent); margin-bottom:6px; }
   .tooltip-meaning { font-size:14px; color:var(--text-primary); margin-bottom:12px; line-height:1.5; font-weight:600; }
-  .tooltip-nomatch { font-size:12px; color:var(--text-muted); margin-bottom:12px; }
   .tooltip-btn {
     width:100%; padding:7px 12px; background:var(--accent); border:none;
     border-radius:var(--radius-sm); color:#fff; font-size:12px;
@@ -320,6 +315,76 @@
     max-width:100%; height:auto; display:block;
     border-radius:12px; box-shadow:var(--shadow-sm);
   }
+
+  /* ── Mobile: panel toggle ── */
+  .mobile-panel-toggle {
+    display:none; flex-shrink:0; padding:8px 16px 0;
+    background:var(--bg-body);
+  }
+  .mobile-panel-toggle .tabs { margin:0; }
+
+  /* ── Floating vocab button (mobile) ── */
+  .fab-vocab {
+    display:none; position:fixed; bottom:20px; right:20px; z-index:900;
+    width:52px; height:52px; border-radius:50%; border:none;
+    background:var(--accent); color:#fff; box-shadow:0 4px 16px var(--accent-glow);
+    cursor:pointer; transition:var(--transition);
+  }
+  .fab-vocab:active { transform:scale(0.92); }
+  .fab-vocab svg { width:22px; height:22px; }
+
+  /* ══════════════════════════════════════
+     MOBILE RESPONSIVE ( < 768px )
+     ══════════════════════════════════════ */
+  @media (max-width:767px) {
+    body { height:100vh; height:100dvh; }
+
+    .header { padding:8px 14px; }
+    .header h1 { font-size:14px; }
+    .header .btn-icon-desktop { display:none; }
+
+    .fab-vocab { display:grid; place-items:center; }
+
+    /* Layout stacks vertically */
+    .layout { flex-direction:column; }
+
+    /* Sidebar → horizontal pill bar */
+    .sidebar {
+      width:100%; flex-direction:row; justify-content:center;
+      border-right:none; border-bottom:1px solid var(--border);
+      padding:8px 16px; gap:10px; overflow-x:auto;
+      flex-shrink:0;
+    }
+    .sidebar-item { width:38px; height:38px; font-size:13px; flex-shrink:0; }
+
+    /* Main stacks vertically */
+    .main { flex-direction:column; flex:1; overflow:hidden; }
+
+    /* Mobile panel toggle */
+    .mobile-panel-toggle { display:flex; }
+
+    /* Panels: show/hide via JS class */
+    .panel { width:100%; }
+    .panel-left { border-right:none; }
+    .panel.mobile-hidden { display:none; }
+
+    /* Adjust padding */
+    .panel-header { padding:10px 16px 0; }
+    .meta-box { margin:8px 16px 0; padding:10px 14px; }
+    .meta-title { font-size:14px; }
+    .meta-summary { font-size:12px; }
+    .article-content { padding:10px 16px 16px; font-size:13.5px; line-height:1.8; }
+    .article-thumb { margin:0 16px 16px; }
+
+    .sentence-list { padding:10px 14px; gap:10px; }
+    .s-block { padding:10px 12px; }
+    .s-source { font-size:13px; }
+    .s-input { font-size:12.5px; padding:8px 10px; min-height:38px; }
+    .s-btn { width:38px; height:38px; }
+    .s-btn svg { width:16px; height:16px; }
+
+    .toast { bottom:80px; font-size:12px; padding:8px 16px; }
+  }
 </style>
 </head>
 <body>
@@ -338,16 +403,18 @@
     <div class="logo">IEL</div>
     <h1>IEL</h1>
   </div>
-  <button class="btn-icon" onclick="openVocabModal()" title="단어장">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
-  </button>
+  <div class="header-right">
+    <button class="btn-icon btn-icon-desktop" onclick="openVocabModal()" title="단어장">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
+    </button>
+  </div>
 </header>
 
 <!-- Layout -->
 <div class="layout" id="appLayout" style="display:none">
   <nav class="sidebar" id="sidebar"></nav>
   <div class="main">
-    <div class="panel panel-left">
+    <div class="panel panel-left" id="panelLeft">
       <div class="panel-header">
         <div class="tabs">
           <button class="tab active" data-tab="en" onclick="switchTab('en')">English</button>
@@ -357,11 +424,23 @@
       <div class="meta-box" id="metaBox"></div>
       <div class="article-content" id="articleContent"></div>
     </div>
-    <div class="panel panel-right">
+    <!-- Mobile panel toggle -->
+    <div class="mobile-panel-toggle" id="mobilePanelToggle">
+      <div class="tabs">
+        <button class="tab active" data-mp="article" onclick="switchMobilePanel('article')">Article</button>
+        <button class="tab" data-mp="practice" onclick="switchMobilePanel('practice')">Practice</button>
+      </div>
+    </div>
+    <div class="panel panel-right mobile-hidden" id="panelRight">
       <div class="sentence-list" id="sentenceList"></div>
     </div>
   </div>
 </div>
+
+<!-- Floating vocab button (mobile) -->
+<button class="fab-vocab" id="fabVocab" onclick="openVocabModal()" title="단어장">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
+</button>
 
 <!-- Tooltip -->
 <div class="tooltip" id="tooltip">
@@ -453,8 +532,7 @@ function findMatchInPairs(word) {
       const found = koWords.some(kw => kw.includes(word) || word.includes(kw));
       if (found) {
         const enWords = pair.en.toLowerCase().replace(/[.,;:!?'"()—\-]/g, '').split(/\s+/);
-        const koClean = koWords.map(w => w);
-        let matchIdx = koClean.findIndex(kw => kw.includes(word) || word.includes(kw));
+        let matchIdx = koWords.findIndex(kw => kw.includes(word) || word.includes(kw));
         if (matchIdx < 0) matchIdx = 0;
         const ratio = matchIdx / koWords.length;
         const enIdx = Math.min(Math.round(ratio * enWords.length), enWords.length - 1);
@@ -484,8 +562,7 @@ function renderMeta() {
 function renderSidebar() {
   document.getElementById('sidebar').innerHTML = articles.map((a,i) => `
     <button class="sidebar-item${i===currentDay?' active':''}" onclick="selectDay(${i})" title="${esc(a.title)}">
-      <span class="sidebar-num">${i+1}</span>
-      <span class="sidebar-title">${esc(a.title)}</span>
+      ${i+1}
     </button>`).join('');
 }
 function renderArticle() {
@@ -541,8 +618,22 @@ function selectDay(i) {
 }
 function switchTab(tab) {
   currentTab = tab;
-  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab===tab));
+  document.querySelectorAll('.panel-header .tab, .panel-left .tab').forEach(t => t.classList.toggle('active', t.dataset.tab===tab));
   renderArticle(); renderMeta(); renderSentences(); hideTooltip();
+}
+
+// ── Mobile Panel Toggle ──
+function switchMobilePanel(panel) {
+  const left = document.getElementById('panelLeft');
+  const right = document.getElementById('panelRight');
+  document.querySelectorAll('#mobilePanelToggle .tab').forEach(t => t.classList.toggle('active', t.dataset.mp===panel));
+  if (panel === 'article') {
+    left.classList.remove('mobile-hidden');
+    right.classList.add('mobile-hidden');
+  } else {
+    left.classList.add('mobile-hidden');
+    right.classList.remove('mobile-hidden');
+  }
 }
 
 // ── Per-sentence AI Correction ──
@@ -607,7 +698,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const rect = range.getBoundingClientRect();
     let left = rect.left + rect.width/2 - 120, top = rect.bottom + 10;
     if (left < 10) left = 10;
-    if (left + 280 > window.innerWidth) left = window.innerWidth - 290;
+    if (left + 260 > window.innerWidth) left = window.innerWidth - 270;
     if (top + 160 > window.innerHeight) top = rect.top - 140;
     tip.style.left = left+'px'; tip.style.top = top+'px';
     tip.classList.add('show');
