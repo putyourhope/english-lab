@@ -238,7 +238,7 @@
 
   /* ── Tooltip ── */
   .tooltip {
-    display:none; position:fixed; z-index:1000; background:var(--bg-white);
+    display:none; position:fixed; z-index:5000; background:var(--bg-white);
     border:1px solid var(--border); border-radius:var(--radius);
     padding:14px 16px; box-shadow:var(--shadow-lg); min-width:180px; max-width:260px;
   }
@@ -323,10 +323,10 @@
 
   /* ── Thumbnail ── */
   .article-thumb {
-    margin:0 24px 24px; flex-shrink:0;
+    margin:0 24px 24px; flex-shrink:0; background:transparent;
   }
   .article-thumb img {
-    max-width:100%; height:auto; display:block;
+    width:100%; height:auto; display:block;
     border-radius:12px; box-shadow:var(--shadow-sm);
   }
 
@@ -578,7 +578,10 @@ function renderSidebar() {
     </button>`).join('');
 }
 function wrapWords(text) {
-  return text.replace(/(\S+)/g, (m) => `<span class="w">${esc(m)}</span>`);
+  return text.replace(/(\S+)/g, (m) => {
+    const clean = m.replace(/[^a-zA-Z0-9가-힣ㄱ-ㅎㅏ-ㅣ]/g, '');
+    return `<span class="w" data-word="${esc(clean)}">${esc(m)}</span>`;
+  });
 }
 function renderArticle() {
   const a = articles[currentDay];
@@ -677,39 +680,38 @@ function correctSentence(idx) {
   }, 1600);
 }
 
-// ── Tooltip ──
+// ── Tooltip (event delegation on document — works regardless of render timing) ──
 function hideTooltip() { document.getElementById('tooltip').classList.remove('show'); }
-document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('articleContent').addEventListener('click', function(e) {
-    const span = e.target.closest('.w');
-    if (!span) { hideTooltip(); return; }
+document.addEventListener('click', function(e) {
+  if (e.target.closest('.tooltip-btn')) return;
+  if (e.target.closest('.tooltip')) return;
 
-    const raw = span.textContent.trim();
-    const word = raw.replace(/[^a-zA-Z0-9가-힣ㄱ-ㅎㅏ-ㅣ]/g, '');
-    if (!word) return;
+  const span = e.target.closest('.w');
+  if (!span) { hideTooltip(); return; }
 
-    const match = findMatchInPairs(word);
-    if (!match) { hideTooltip(); return; }
+  const word = span.getAttribute('data-word');
+  if (!word) { hideTooltip(); return; }
 
-    selectedWord = match.displayWord;
-    selectedMeaning = match.meaning;
-    selectedContext = '';
+  const match = findMatchInPairs(word);
+  if (!match) { hideTooltip(); return; }
 
-    const tip = document.getElementById('tooltip');
-    document.getElementById('tooltipWord').textContent = selectedWord;
-    document.getElementById('tooltipMeaning').textContent = selectedMeaning;
+  selectedWord = match.displayWord;
+  selectedMeaning = match.meaning;
+  selectedContext = '';
 
-    const rect = span.getBoundingClientRect();
-    let left = rect.left + rect.width/2 - 120, top = rect.bottom + 10;
-    if (left < 10) left = 10;
-    if (left + 260 > window.innerWidth) left = window.innerWidth - 270;
-    if (top + 160 > window.innerHeight) top = rect.top - 140;
-    tip.style.left = left+'px'; tip.style.top = top+'px';
-    tip.classList.add('show');
-  });
-  document.addEventListener('click', function(e) {
-    if (!e.target.closest('.tooltip') && !e.target.closest('.w')) hideTooltip();
-  });
+  const tip = document.getElementById('tooltip');
+  document.getElementById('tooltipWord').textContent = selectedWord;
+  document.getElementById('tooltipMeaning').textContent = selectedMeaning;
+
+  const rect = span.getBoundingClientRect();
+  let left = rect.left + rect.width/2 - 120, top = rect.bottom + 10;
+  if (left < 10) left = 10;
+  if (left + 260 > window.innerWidth) left = window.innerWidth - 270;
+  if (top + 160 > window.innerHeight) top = rect.top - 140;
+  tip.style.left = left+'px'; tip.style.top = top+'px';
+  tip.classList.remove('show');
+  void tip.offsetWidth;
+  tip.classList.add('show');
 });
 
 // ── Supabase CRUD ──
@@ -748,7 +750,7 @@ async function loadVocab() {
   }
   if (error) { list.innerHTML = `<div class="vocab-empty">조회 실패: ${error.message}</div>`; return; }
   if (!data || data.length===0) {
-    list.innerHTML = '<div class="vocab-empty">저장된 단어가 없습니다.<br>아티클에서 단어를 더블 클릭하여 추가해 보세요.</div>';
+    list.innerHTML = '<div class="vocab-empty">저장된 단어가 없습니다.<br>아티클에서 단어를 클릭하여 추가해 보세요.</div>';
     return;
   }
   list.innerHTML = data.map(item => `

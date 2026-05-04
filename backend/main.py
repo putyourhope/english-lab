@@ -55,27 +55,48 @@ def fetch_rss_entries():
 
 
 def extract_image(entry):
-    """RSS 엔트리에서 대표 이미지 URL 추출"""
-    # media_content
+    """RSS 엔트리에서 대표 이미지 URL 추출 (원본 기사 이미지 우선)"""
+    # 1. media_content (가장 신뢰도 높음)
     media = entry.get("media_content", [])
     if media:
         for m in media:
             url = m.get("url", "")
-            if url and any(ext in url.lower() for ext in [".jpg", ".jpeg", ".png", ".webp"]):
+            if url and any(ext in url.lower() for ext in [".jpg", ".jpeg", ".png", ".webp", ".gif"]):
                 return url
         if media[0].get("url"):
             return media[0]["url"]
 
-    # media_thumbnail
+    # 2. media_thumbnail
     thumbs = entry.get("media_thumbnail", [])
     if thumbs and thumbs[0].get("url"):
         return thumbs[0]["url"]
 
-    # og:image or <img> from summary/content HTML
-    html = entry.get("summary", "") + entry.get("content", [{}])[0].get("value", "") if entry.get("content") else entry.get("summary", "")
-    img_match = re.search(r'<img[^>]+src=["\']([^"\']+)["\']', html)
-    if img_match:
-        return img_match.group(1)
+    # 3. enclosure (일부 RSS에서 사용)
+    enclosures = entry.get("enclosures", [])
+    for enc in enclosures:
+        enc_type = enc.get("type", "")
+        if enc_type.startswith("image/") and enc.get("href"):
+            return enc["href"]
+
+    links = entry.get("links", [])
+    for link in links:
+        if link.get("type", "").startswith("image/") and link.get("href"):
+            return link["href"]
+
+    # 4. content / summary HTML 에서 <img> 추출
+    html_parts = []
+    content_list = entry.get("content", [])
+    if content_list:
+        for c in content_list:
+            html_parts.append(c.get("value", ""))
+    html_parts.append(entry.get("summary", ""))
+    full_html = " ".join(html_parts)
+
+    img_matches = re.findall(r'<img[^>]+src=["\']([^"\']+)["\']', full_html)
+    for img_url in img_matches:
+        if any(skip in img_url.lower() for skip in ["tracking", "pixel", "1x1", "spacer", "blank", "avatar", "icon", "logo", "badge"]):
+            continue
+        return img_url
 
     return None
 
@@ -155,12 +176,10 @@ Please create the IEL learning content JSON for this article."""
 
 
 def resolve_image_url(entry, data):
-    """RSS 이미지 → LLM 키워드 fallback"""
+    """RSS 이미지가 있으면 사용, 없으면 null (부적합 랜덤 이미지 제거)"""
     if entry.get("image_url"):
         return entry["image_url"]
-    keyword = data.get("image_keyword", "technology")
-    safe_kw = keyword.replace(" ", "+")
-    return f"https://loremflickr.com/800/400/{safe_kw}"
+    return None
 
 
 def save_to_supabase(entry, data):
