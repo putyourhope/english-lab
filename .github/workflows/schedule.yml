@@ -1,0 +1,28 @@
+name: IEL Daily Article Pipeline
+
+on:
+  schedule:
+    # 한국 시간 기준 매일 아침 7시에 실행 (UTC 기준 22시)
+    - cron: '0 22 * * *'
+  workflow_dispatch: # 수동으로도 실행할 수 있게 해주는 버튼
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          
+      - name: Install dependencies
+        run: pip install -r backend/requirements.txt
+        
+      - name: Run pipeline
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: python backend/main.py
