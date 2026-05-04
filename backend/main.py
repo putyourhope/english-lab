@@ -29,7 +29,8 @@ RSS_FEEDS = [
     "https://www.wired.com/feed/rss",
 ]
 
-MAX_ARTICLES_PER_RUN = 1  # 하루 1개씩 공급
+MAX_ARTICLES = 5
+API_COOLDOWN = 20  # 초
 
 
 def fetch_rss_entries():
@@ -51,15 +52,16 @@ def fetch_rss_entries():
     return entries
 
 
-def pick_best_entry(entries):
-    """이미 DB에 있는 기사를 제외하고 가장 적합한 기사 선택"""
-    existing = sb.table("articles").select("source_url").execute()
-    existing_urls = {r["source_url"] for r in (existing.data or [])}
+def filter_new_entries(entries):
+    """이미 DB에 있는 기사를 제외"""
+    try:
+        existing = sb.table("articles").select("source_url").execute()
+        existing_urls = {r["source_url"] for r in (existing.data or [])}
+    except Exception as e:
+        print(f"[DB] 기존 기사 조회 실패: {e}")
+        existing_urls = set()
 
-    for entry in entries:
-        if entry["link"] not in existing_urls:
-            return entry
-    return None
+    return [e for e in entries if e["link"] not in existing_urls]
 
 
 SYSTEM_PROMPT = """You are an English-Korean bilingual education content creator for IT professionals.
@@ -128,7 +130,6 @@ def save_to_supabase(entry, data):
     }
 
     result = sb.table("articles").insert(row).execute()
-    print(f"[DB] 저장 완료: {data['title_ko']}")
     return result
 
 
@@ -136,22 +137,48 @@ def run():
     print(f"[IEL Pipeline] 시작 — {datetime.now(timezone.utc).isoformat()}")
 
     entries = fetch_rss_entries()
-    print(f"[RSS] {len(entries)}개 기사 수집")
+    print(f"[RSS] 총 {len(entries)}개 기사 수집")
 
-    for _ in range(MAX_ARTICLES_PER_RUN):
-        entry = pick_best_entry(entries)
-        if not entry:
-            print("[SKIP] 새로운 기사가 없습니다.")
-            break
+    new_entries = filter_new_entries(entries)
+    print(f"[FILTER] 신규 기사 {len(new_entries)}개")
 
-        print(f"[LLM] 처리 중: {entry['title']}")
+    targets = new_entries[:MAX_ARTICLES]
+    if not targets:
+        print("[SKIP] 처리할 새로운 기사가 없습니다.")
+        return
+
+    print(f"[PLAN] {len(targets)}개 기사 처리 예정\n")
+
+    success = 0
+    fail = 0
+
+    for i, entry in enumerate(targets):
+        print(f"[{i+1}/{len(targets)}] 처리 중: {entry['title']}")
+
         try:
             data = generate_article_data(entry)
-            save_to_supabase(entry, data)
+            print(f"  [LLM] 변환 완료 — 문장 {len(data.get('content',[]))}개")
         except Exception as e:
-            print(f"[ERROR] {entry['title']}: {e}")
+            print(f"  [ERROR/LLM] {e}")
+            fail += 1
+            if i < len(targets) - 1:
+                print(f"  [WAIT] {API_COOLDOWN}초 대기 후 다음 기사로...")
+                time.sleep(API_COOLDOWN)
+            continue
 
-    print("[IEL Pipeline] 완료")
+        try:
+            save_to_supabase(entry, data)
+            print(f"  [DB] 저장 완료: {data['title_ko']}")
+            success += 1
+        except Exception as e:
+            print(f"  [ERROR/DB] {e}")
+            fail += 1
+
+        if i < len(targets) - 1:
+            print(f"  [WAIT] {API_COOLDOWN}초 대기...")
+            time.sleep(API_COOLDOWN)
+
+    print(f"\n[IEL Pipeline] 완료 — 성공 {success}개 / 실패 {fail}개")
 
 
 if __name__ == "__main__":
