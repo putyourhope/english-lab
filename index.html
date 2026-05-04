@@ -3,38 +3,45 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>IT English Lab - 영어 학습 웹앱</title>
+<title>IEL</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
   :root {
-    --bg-primary: #0f1117;
-    --bg-secondary: #1a1d27;
-    --bg-tertiary: #242736;
-    --bg-hover: #2d3148;
-    --border: #2e3347;
-    --text-primary: #e8eaed;
-    --text-secondary: #9aa0b0;
-    --text-muted: #6b7280;
-    --accent: #6c5ce7;
-    --accent-hover: #7c6ff7;
-    --accent-glow: rgba(108, 92, 231, 0.25);
+    --bg-body: #f5f6f8;
+    --bg-white: #ffffff;
+    --bg-sidebar: #f0f1f4;
+    --bg-sidebar-active: #eae6fb;
+    --bg-hover: #edeef1;
+    --bg-input: #f8f9fb;
+    --border: #e2e4e9;
+    --border-focus: #7c5ce7;
+    --text-primary: #1a1d27;
+    --text-secondary: #5a5f72;
+    --text-muted: #9298a8;
+    --accent: #7c5ce7;
+    --accent-hover: #6a4bd4;
+    --accent-glow: rgba(124, 92, 231, 0.15);
+    --accent-light: #f0ecfd;
     --danger: #e74c5c;
-    --danger-hover: #f25d6d;
+    --danger-hover: #d43b4a;
     --success: #2ecc71;
-    --diff-add-bg: rgba(46, 204, 113, 0.12);
-    --diff-add-border: rgba(46, 204, 113, 0.4);
-    --diff-del-bg: rgba(231, 76, 92, 0.12);
-    --diff-del-border: rgba(231, 76, 92, 0.4);
+    --diff-add-bg: rgba(46, 204, 113, 0.10);
+    --diff-add-border: #2ecc71;
+    --diff-del-bg: rgba(231, 76, 92, 0.08);
+    --diff-del-border: #e74c5c;
     --radius: 10px;
     --radius-sm: 6px;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+    --shadow-md: 0 4px 16px rgba(0,0,0,0.08);
+    --shadow-lg: 0 12px 40px rgba(0,0,0,0.12);
     --transition: 0.2s ease;
   }
 
   body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans KR', sans-serif;
-    background: var(--bg-primary);
+    background: var(--bg-body);
     color: var(--text-primary);
     height: 100vh;
     overflow: hidden;
@@ -47,25 +54,25 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 14px 28px;
-    background: var(--bg-secondary);
+    padding: 12px 24px;
+    background: var(--bg-white);
     border-bottom: 1px solid var(--border);
     flex-shrink: 0;
   }
-  .header-left { display: flex; align-items: center; gap: 12px; }
+  .header-left { display: flex; align-items: center; gap: 10px; }
   .logo {
-    width: 34px; height: 34px;
+    width: 32px; height: 32px;
     background: var(--accent);
     border-radius: 8px;
     display: grid; place-items: center;
-    font-weight: 800; font-size: 15px; color: #fff;
+    font-weight: 800; font-size: 12px; color: #fff;
+    letter-spacing: -0.5px;
   }
-  .header h1 { font-size: 17px; font-weight: 700; letter-spacing: -0.3px; }
-  .header h1 span { color: var(--accent); }
+  .header h1 { font-size: 16px; font-weight: 700; color: var(--text-primary); letter-spacing: -0.3px; }
 
   .btn-vocab {
-    padding: 8px 18px;
-    background: var(--bg-tertiary);
+    padding: 7px 16px;
+    background: var(--bg-white);
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
     color: var(--text-primary);
@@ -75,8 +82,56 @@
     transition: var(--transition);
     display: flex; align-items: center; gap: 6px;
   }
-  .btn-vocab:hover { background: var(--bg-hover); border-color: var(--accent); }
-  .btn-vocab svg { width: 16px; height: 16px; }
+  .btn-vocab:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+  .btn-vocab svg { width: 15px; height: 15px; }
+
+  /* ── Layout ── */
+  .layout {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    width: 64px;
+    background: var(--bg-white);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 12px 0;
+    gap: 4px;
+    overflow-y: auto;
+    flex-shrink: 0;
+  }
+  .sidebar::-webkit-scrollbar { width: 0; }
+  .sidebar-label {
+    font-size: 9px;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+  }
+  .sidebar-item {
+    width: 42px; height: 42px;
+    display: grid; place-items: center;
+    border-radius: var(--radius-sm);
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+  }
+  .sidebar-item:hover { background: var(--bg-hover); color: var(--text-primary); }
+  .sidebar-item.active {
+    background: var(--accent);
+    color: #fff;
+    box-shadow: 0 2px 8px var(--accent-glow);
+  }
 
   /* ── Main Split ── */
   .main {
@@ -91,37 +146,37 @@
     flex-direction: column;
     overflow: hidden;
   }
-  .panel-left { border-right: 1px solid var(--border); }
+  .panel-left { border-right: 1px solid var(--border); background: var(--bg-white); }
+  .panel-right { background: var(--bg-body); }
 
   .panel-header {
-    padding: 20px 28px 0;
+    padding: 18px 24px 0;
     flex-shrink: 0;
   }
   .panel-title {
-    font-size: 13px;
-    font-weight: 600;
+    font-size: 11px;
+    font-weight: 700;
     color: var(--text-muted);
     text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-bottom: 14px;
+    letter-spacing: 1.2px;
+    margin-bottom: 12px;
   }
 
   /* ── Tabs ── */
   .tabs {
     display: flex;
     gap: 4px;
-    background: var(--bg-primary);
+    background: var(--bg-body);
     border-radius: var(--radius-sm);
     padding: 3px;
-    margin-bottom: 0;
   }
   .tab {
     flex: 1;
-    padding: 10px 16px;
+    padding: 9px 14px;
     background: transparent;
     border: none;
     border-radius: 5px;
-    color: var(--text-secondary);
+    color: var(--text-muted);
     font-size: 13px;
     font-weight: 600;
     cursor: pointer;
@@ -134,24 +189,34 @@
     box-shadow: 0 2px 8px var(--accent-glow);
   }
 
-  /* ── Article Content ── */
+  /* ── Article ── */
+  .article-meta {
+    padding: 16px 24px 0;
+    flex-shrink: 0;
+  }
+  .article-title-text {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1.4;
+  }
   .article-content {
     flex: 1;
-    padding: 24px 28px;
+    padding: 16px 24px 24px;
     overflow-y: auto;
-    line-height: 1.85;
+    line-height: 1.9;
     font-size: 15px;
     color: var(--text-primary);
   }
-  .article-content p { margin-bottom: 18px; }
-  .article-content::-webkit-scrollbar { width: 6px; }
+  .article-content p { margin-bottom: 16px; }
+  .article-content::-webkit-scrollbar { width: 5px; }
   .article-content::-webkit-scrollbar-track { background: transparent; }
-  .article-content::-webkit-scrollbar-thumb { background: var(--bg-hover); border-radius: 3px; }
+  .article-content::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 
   /* ── Right Panel ── */
   .editor-wrap {
     flex: 1;
-    padding: 24px 28px;
+    padding: 18px 24px;
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -159,29 +224,30 @@
   .editor {
     flex: 1;
     width: 100%;
-    background: var(--bg-primary);
-    border: 1px solid var(--border);
+    background: var(--bg-white);
+    border: 1.5px solid var(--border);
     border-radius: var(--radius);
-    padding: 18px 20px;
+    padding: 16px 18px;
     color: var(--text-primary);
     font-size: 15px;
     line-height: 1.8;
     resize: none;
     font-family: inherit;
-    transition: border-color var(--transition);
+    transition: border-color var(--transition), box-shadow var(--transition);
     min-height: 0;
+    box-shadow: var(--shadow-sm);
   }
   .editor:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
   .editor::placeholder { color: var(--text-muted); }
 
   .btn-ai {
-    margin-top: 16px;
-    padding: 14px 28px;
-    background: linear-gradient(135deg, var(--accent), #a366f7);
+    margin-top: 14px;
+    padding: 13px 24px;
+    background: var(--accent);
     border: none;
     border-radius: var(--radius);
     color: #fff;
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 700;
     cursor: pointer;
     transition: var(--transition);
@@ -190,61 +256,60 @@
     justify-content: center;
     gap: 8px;
     flex-shrink: 0;
+    box-shadow: 0 2px 10px var(--accent-glow);
   }
-  .btn-ai:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 20px var(--accent-glow); }
-  .btn-ai:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
-  .btn-ai svg { width: 18px; height: 18px; }
+  .btn-ai:hover:not(:disabled) { background: var(--accent-hover); transform: translateY(-1px); box-shadow: 0 4px 16px var(--accent-glow); }
+  .btn-ai:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+  .btn-ai svg { width: 17px; height: 17px; }
 
   /* ── Loading ── */
   .loading-area {
     display: none;
     flex-direction: column;
     align-items: center;
-    gap: 14px;
-    padding: 28px 0;
+    gap: 12px;
+    padding: 24px 0;
     flex-shrink: 0;
   }
   .loading-area.show { display: flex; }
-
   .spinner {
-    width: 36px; height: 36px;
-    border: 3px solid var(--bg-hover);
+    width: 32px; height: 32px;
+    border: 3px solid var(--border);
     border-top-color: var(--accent);
     border-radius: 50%;
     animation: spin 0.8s linear infinite;
   }
   @keyframes spin { to { transform: rotate(360deg); } }
-  .loading-text { font-size: 14px; color: var(--text-secondary); font-weight: 500; }
+  .loading-text { font-size: 13px; color: var(--text-secondary); font-weight: 500; }
 
   /* ── Diff Result ── */
   .diff-result {
     display: none;
     flex-direction: column;
-    gap: 14px;
-    margin-top: 16px;
+    gap: 12px;
+    margin-top: 14px;
     flex-shrink: 0;
-    max-height: 320px;
+    max-height: 300px;
     overflow-y: auto;
   }
   .diff-result.show { display: flex; }
-  .diff-result::-webkit-scrollbar { width: 6px; }
-  .diff-result::-webkit-scrollbar-track { background: transparent; }
-  .diff-result::-webkit-scrollbar-thumb { background: var(--bg-hover); border-radius: 3px; }
+  .diff-result::-webkit-scrollbar { width: 5px; }
+  .diff-result::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 
   .diff-title {
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 700;
     color: var(--accent);
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
   }
   .diff-block {
-    background: var(--bg-primary);
+    background: var(--bg-white);
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
-    padding: 16px 18px;
-    font-size: 14px;
+    padding: 14px 16px;
+    font-size: 13.5px;
     line-height: 1.9;
   }
   .diff-line-del {
@@ -254,7 +319,7 @@
     margin: 3px 0;
     border-radius: 3px;
     text-decoration: line-through;
-    color: #e88;
+    color: #c0392b;
   }
   .diff-line-add {
     background: var(--diff-add-bg);
@@ -262,12 +327,12 @@
     padding: 3px 10px;
     margin: 3px 0;
     border-radius: 3px;
-    color: #6fd89c;
+    color: #1e8449;
   }
   .diff-comment {
-    background: var(--bg-tertiary);
+    background: var(--accent-light);
     border-left: 3px solid var(--accent);
-    padding: 12px 16px;
+    padding: 10px 14px;
     border-radius: 3px;
     font-size: 13px;
     color: var(--text-secondary);
@@ -280,26 +345,26 @@
     display: none;
     position: fixed;
     z-index: 1000;
-    background: var(--bg-secondary);
+    background: var(--bg-white);
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    padding: 16px 18px;
-    box-shadow: 0 12px 40px rgba(0,0,0,0.5);
-    min-width: 240px;
-    max-width: 320px;
+    padding: 14px 16px;
+    box-shadow: var(--shadow-lg);
+    min-width: 230px;
+    max-width: 300px;
   }
   .tooltip.show { display: block; }
-  .tooltip-word { font-size: 17px; font-weight: 700; color: var(--accent); margin-bottom: 6px; }
+  .tooltip-word { font-size: 16px; font-weight: 700; color: var(--accent); margin-bottom: 5px; }
   .tooltip-meaning { font-size: 13px; color: var(--text-secondary); margin-bottom: 4px; line-height: 1.5; }
-  .tooltip-context { font-size: 12px; color: var(--text-muted); margin-bottom: 12px; line-height: 1.5; font-style: italic; }
+  .tooltip-context { font-size: 11.5px; color: var(--text-muted); margin-bottom: 10px; line-height: 1.5; font-style: italic; }
   .tooltip-btn {
     width: 100%;
-    padding: 9px 14px;
+    padding: 8px 12px;
     background: var(--accent);
     border: none;
     border-radius: var(--radius-sm);
     color: #fff;
-    font-size: 13px;
+    font-size: 12.5px;
     font-weight: 600;
     cursor: pointer;
     transition: var(--transition);
@@ -312,80 +377,71 @@
     position: fixed;
     inset: 0;
     z-index: 2000;
-    background: rgba(0,0,0,0.65);
+    background: rgba(0,0,0,0.3);
     backdrop-filter: blur(4px);
     place-items: center;
   }
   .modal-overlay.show { display: grid; }
-
   .modal {
-    background: var(--bg-secondary);
+    background: var(--bg-white);
     border: 1px solid var(--border);
     border-radius: 14px;
-    width: 560px;
+    width: 540px;
     max-width: 92vw;
     max-height: 80vh;
     display: flex;
     flex-direction: column;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    box-shadow: var(--shadow-lg);
     animation: modalIn 0.25s ease;
   }
-  @keyframes modalIn { from { opacity: 0; transform: translateY(16px) scale(0.97); } }
-
+  @keyframes modalIn { from { opacity: 0; transform: translateY(14px) scale(0.97); } }
   .modal-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 20px 24px;
+    padding: 18px 22px;
     border-bottom: 1px solid var(--border);
   }
-  .modal-header h2 { font-size: 17px; font-weight: 700; }
+  .modal-header h2 { font-size: 16px; font-weight: 700; }
   .modal-close {
-    width: 32px; height: 32px;
-    background: var(--bg-tertiary);
+    width: 30px; height: 30px;
+    background: var(--bg-body);
     border: none;
     border-radius: 8px;
     color: var(--text-secondary);
-    font-size: 18px;
+    font-size: 17px;
     cursor: pointer;
     display: grid; place-items: center;
     transition: var(--transition);
   }
   .modal-close:hover { background: var(--danger); color: #fff; }
-
   .modal-body {
-    padding: 20px 24px;
+    padding: 18px 22px;
     overflow-y: auto;
     flex: 1;
   }
-  .modal-body::-webkit-scrollbar { width: 6px; }
-  .modal-body::-webkit-scrollbar-thumb { background: var(--bg-hover); border-radius: 3px; }
-
-  .vocab-empty {
-    text-align: center;
-    padding: 40px 0;
-    color: var(--text-muted);
-    font-size: 14px;
-  }
+  .modal-body::-webkit-scrollbar { width: 5px; }
+  .modal-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  .vocab-empty { text-align: center; padding: 36px 0; color: var(--text-muted); font-size: 13px; }
   .vocab-item {
     display: flex;
     align-items: flex-start;
-    gap: 14px;
-    padding: 14px 0;
+    gap: 12px;
+    padding: 12px 0;
     border-bottom: 1px solid var(--border);
   }
   .vocab-item:last-child { border-bottom: none; }
   .vocab-info { flex: 1; }
-  .vocab-word { font-size: 16px; font-weight: 700; color: var(--accent); margin-bottom: 4px; }
-  .vocab-meaning { font-size: 13px; color: var(--text-secondary); margin-bottom: 3px; }
-  .vocab-ctx { font-size: 12px; color: var(--text-muted); font-style: italic; line-height: 1.5; }
+  .vocab-word { font-size: 15px; font-weight: 700; color: var(--accent); margin-bottom: 3px; }
+  .vocab-meaning { font-size: 13px; color: var(--text-secondary); margin-bottom: 2px; }
+  .vocab-ctx { font-size: 11.5px; color: var(--text-muted); font-style: italic; line-height: 1.5; }
   .vocab-del {
-    padding: 6px 12px;
+    padding: 5px 10px;
     background: transparent;
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
     color: var(--text-muted);
-    font-size: 12px;
+    font-size: 11.5px;
     cursor: pointer;
     transition: var(--transition);
     flex-shrink: 0;
@@ -396,17 +452,16 @@
   /* ── Toast ── */
   .toast {
     position: fixed;
-    bottom: 28px;
+    bottom: 24px;
     left: 50%;
-    transform: translateX(-50%) translateY(80px);
-    background: var(--bg-tertiary);
-    border: 1px solid var(--border);
+    transform: translateX(-50%) translateY(70px);
+    background: var(--text-primary);
     border-radius: var(--radius);
-    padding: 12px 22px;
+    padding: 11px 20px;
     font-size: 13px;
     font-weight: 600;
-    color: var(--text-primary);
-    box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+    color: #fff;
+    box-shadow: var(--shadow-md);
     z-index: 3000;
     opacity: 0;
     transition: transform 0.35s ease, opacity 0.35s ease;
@@ -416,57 +471,56 @@
 </head>
 <body>
 
-<!-- Header -->
 <header class="header">
   <div class="header-left">
-    <div class="logo">iE</div>
-    <h1><span>IT</span> English Lab</h1>
+    <div class="logo">IEL</div>
+    <h1>IEL</h1>
   </div>
-  <button class="btn-vocab" id="btnOpenVocab" onclick="openVocabModal()">
+  <button class="btn-vocab" onclick="openVocabModal()">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/><path d="M8 7h8M8 11h5"/></svg>
-    단어장 보기
+    단어장
   </button>
 </header>
 
-<!-- Main Split View -->
-<div class="main">
+<div class="layout">
 
-  <!-- Left Panel -->
-  <div class="panel panel-left">
-    <div class="panel-header">
-      <div class="panel-title">오늘의 IT 아티클</div>
-      <div class="tabs">
-        <button class="tab active" data-tab="en" onclick="switchTab('en')">영문 아티클 원본</button>
-        <button class="tab" data-tab="ko" onclick="switchTab('ko')">한글 번역본</button>
+  <nav class="sidebar">
+    <div class="sidebar-label">DAY</div>
+  </nav>
+
+  <div class="main">
+    <div class="panel panel-left">
+      <div class="panel-header">
+        <div class="panel-title" id="leftLabel">Article</div>
+        <div class="tabs">
+          <button class="tab active" data-tab="en" onclick="switchTab('en')">English</button>
+          <button class="tab" data-tab="ko" onclick="switchTab('ko')">Korean</button>
+        </div>
       </div>
+      <div class="article-meta"><div class="article-title-text" id="articleTitle"></div></div>
+      <div class="article-content" id="articleContent"></div>
     </div>
-    <div class="article-content" id="articleContent"></div>
-  </div>
 
-  <!-- Right Panel -->
-  <div class="panel panel-right">
-    <div class="panel-header">
-      <div class="panel-title" id="rightTitle">나의 번역</div>
-    </div>
-    <div class="editor-wrap">
-      <textarea class="editor" id="userEditor" placeholder="이곳에 번역 또는 영작을 자유롭게 입력하세요..."></textarea>
-
-      <div class="loading-area" id="loadingArea">
-        <div class="spinner"></div>
-        <div class="loading-text">AI 튜터가 분석 중입니다...</div>
+    <div class="panel panel-right">
+      <div class="panel-header">
+        <div class="panel-title" id="rightTitle">My Translation</div>
       </div>
-
-      <div class="diff-result" id="diffResult"></div>
-
-      <button class="btn-ai" id="btnAi" onclick="requestAiCorrection()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a4 4 0 014 4c0 1.95-1.4 3.58-3.25 3.93L12 22"/><path d="M8 6a4 4 0 00-4 4c0 1.95 1.4 3.58 3.25 3.93"/><circle cx="12" cy="6" r="1"/><circle cx="8" cy="10" r="1"/></svg>
-        AI 교정 받기
-      </button>
+      <div class="editor-wrap">
+        <textarea class="editor" id="userEditor" placeholder="번역 또는 영작을 자유롭게 입력하세요..."></textarea>
+        <div class="loading-area" id="loadingArea">
+          <div class="spinner"></div>
+          <div class="loading-text">AI 튜터가 분석 중입니다...</div>
+        </div>
+        <div class="diff-result" id="diffResult"></div>
+        <button class="btn-ai" id="btnAi" onclick="requestAiCorrection()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a4 4 0 014 4c0 1.95-1.4 3.58-3.25 3.93L12 22"/><path d="M8 6a4 4 0 00-4 4c0 1.95 1.4 3.58 3.25 3.93"/><circle cx="12" cy="6" r="1"/><circle cx="8" cy="10" r="1"/></svg>
+          AI 교정 받기
+        </button>
+      </div>
     </div>
   </div>
 </div>
 
-<!-- Tooltip -->
 <div class="tooltip" id="tooltip">
   <div class="tooltip-word" id="tooltipWord"></div>
   <div class="tooltip-meaning" id="tooltipMeaning"></div>
@@ -474,7 +528,6 @@
   <button class="tooltip-btn" onclick="addToVocab()">+ 단어장에 추가</button>
 </div>
 
-<!-- Vocabulary Modal -->
 <div class="modal-overlay" id="vocabModal">
   <div class="modal">
     <div class="modal-header">
@@ -485,57 +538,221 @@
   </div>
 </div>
 
-<!-- Toast -->
 <div class="toast" id="toast"></div>
 
 <script>
-// ── Supabase ──
 const SUPABASE_URL = "https://wwwwvdtuovcfsauekxrt.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind3d3d2ZHR1b3ZjZnNhdWVreHJ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc4MTIxOTksImV4cCI6MjA5MzM4ODE5OX0.xYeW0i95Nidv6BTiF2DhIHXgykRPrMLLxdXK7AfclkU";
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// ── State ──
 let currentTab = 'en';
+let currentDay = 0;
 let selectedWord = '';
 let selectedMeaning = '';
 let selectedContext = '';
 
-// ── Article Data ──
-const articles = {
-  en: [
-    "Microservices architecture has become the de facto standard for building scalable cloud-native applications. By decomposing a monolithic system into loosely coupled services, engineering teams can deploy, scale, and iterate on individual components independently. However, this approach introduces new challenges in service discovery, distributed tracing, and data consistency across bounded contexts.",
-    "Observability is no longer a luxury — it's a necessity. Modern SRE teams rely on the three pillars of observability: metrics, logs, and traces. Tools like Prometheus, Grafana, and OpenTelemetry have matured significantly, enabling teams to detect anomalies, correlate incidents, and reduce mean time to recovery (MTTR) from hours to minutes.",
-    "The rise of large language models (LLMs) has fundamentally shifted how product teams think about user experience. From intelligent auto-complete to context-aware assistants, AI-powered features are no longer experimental — they are expected. Engineering leaders must now balance inference costs, latency budgets, and model accuracy when integrating LLM capabilities into production systems."
-  ],
-  ko: [
-    "마이크로서비스 아키텍처는 확장 가능한 클라우드 네이티브 애플리케이션을 구축하기 위한 사실상의 표준이 되었습니다. 모놀리식 시스템을 느슨하게 결합된 서비스로 분해함으로써 엔지니어링 팀은 개별 컴포넌트를 독립적으로 배포, 확장 및 반복 개발할 수 있습니다. 그러나 이 접근 방식은 서비스 디스커버리, 분산 트레이싱, 바운디드 컨텍스트 간 데이터 일관성에서 새로운 과제를 야기합니다.",
-    "관측 가능성(Observability)은 더 이상 사치가 아니라 필수입니다. 현대의 SRE 팀은 관측 가능성의 세 가지 축인 메트릭, 로그, 트레이스에 의존합니다. Prometheus, Grafana, OpenTelemetry와 같은 도구들이 크게 성숙하여 팀이 이상 징후를 감지하고, 인시던트를 상관 분석하며, 평균 복구 시간(MTTR)을 수 시간에서 수 분으로 단축할 수 있게 되었습니다.",
-    "거대 언어 모델(LLM)의 부상은 프로덕트 팀이 사용자 경험을 바라보는 방식을 근본적으로 변화시켰습니다. 지능형 자동 완성부터 컨텍스트 인식 어시스턴트까지, AI 기반 기능은 더 이상 실험적이지 않으며 당연한 것으로 기대됩니다. 엔지니어링 리더는 이제 LLM 기능을 프로덕션 시스템에 통합할 때 추론 비용, 지연 시간 예산, 모델 정확도 사이에서 균형을 잡아야 합니다."
-  ]
-};
+const articles = [
+  {
+    title_en: "Silicon Valley's Remote Work Revolution",
+    title_ko: "실리콘밸리의 재택근무 혁명",
+    en: [
+      "The pandemic fundamentally reshaped how Silicon Valley thinks about office work. What started as a temporary measure has evolved into a permanent shift, with companies like Airbnb and Spotify adopting 'work from anywhere' policies. Even firms that initially resisted, such as Google and Apple, have settled on hybrid models that give employees more flexibility than ever before.",
+      "Proponents argue that remote work boosts productivity by eliminating long commutes and reducing open-office distractions. Studies from Stanford show that remote workers are roughly 13 percent more productive. However, critics warn about the erosion of spontaneous collaboration — the hallway conversations and whiteboard sessions that often spark breakthrough ideas.",
+      "The ripple effects extend far beyond tech. Commercial real estate in San Francisco has seen vacancy rates climb above 30 percent, while smaller cities like Austin and Boise have experienced population booms. The remote work revolution is not just changing where people work — it's reshaping entire regional economies."
+    ],
+    ko: [
+      "팬데믹은 실리콘밸리가 사무실 근무를 바라보는 시각을 근본적으로 바꾸어 놓았습니다. 일시적 조치로 시작된 것이 영구적 변화로 진화하여, 에어비앤비와 스포티파이 같은 기업들은 '어디서든 근무' 정책을 도입했습니다. 처음에는 반대했던 구글과 애플마저도 직원들에게 이전보다 훨씬 큰 유연성을 부여하는 하이브리드 모델을 정착시켰습니다.",
+      "재택근무 지지자들은 긴 통근을 없애고 개방형 사무실의 방해 요소를 줄여 생산성을 높인다고 주장합니다. 스탠퍼드 대학의 연구에 따르면 원격 근무자는 대략 13% 더 생산적입니다. 하지만 비판론자들은 복도에서의 즉흥적 대화나 화이트보드 세션처럼 혁신적 아이디어를 촉발하는 자발적 협업이 약화될 수 있다고 경고합니다.",
+      "이 파급 효과는 기술 산업을 훨씬 넘어섭니다. 샌프란시스코의 상업용 부동산 공실률은 30%를 넘어섰고, 오스틴이나 보이시 같은 중소도시들은 인구 급증을 경험하고 있습니다. 재택근무 혁명은 단순히 사람들이 어디서 일하는지를 바꾸는 것이 아니라, 지역 경제 전체를 재편하고 있습니다."
+    ]
+  },
+  {
+    title_en: "The Pomodoro Technique: Does It Really Work?",
+    title_ko: "뽀모도로 기법: 정말 효과가 있을까?",
+    en: [
+      "The Pomodoro Technique, developed by Francesco Cirillo in the late 1980s, is deceptively simple: work for 25 minutes, take a 5-minute break, and repeat. After four cycles, take a longer 15-to-30-minute break. Named after the tomato-shaped kitchen timer Cirillo used as a university student, it has become one of the most popular productivity methods worldwide.",
+      "Neuroscience research supports the core idea. Our brains are not designed for sustained focus over long periods. Studies show that attention begins to decline after roughly 20 minutes of continuous work. The Pomodoro Technique essentially works with our biology rather than against it, providing regular reset points that help maintain consistent focus throughout the day.",
+      "Critics point out that 25 minutes can feel too short for deep work like coding or writing, where getting into a flow state takes time. Many practitioners adapt the technique — using 50-minute work blocks or pausing the timer during peak flow. The key takeaway may not be the specific intervals, but the broader principle: structured breaks make you more productive, not less."
+    ],
+    ko: [
+      "1980년대 후반 프란체스코 시릴로가 개발한 뽀모도로 기법은 놀라울 정도로 단순합니다. 25분간 작업하고 5분 휴식을 취한 뒤 이를 반복합니다. 4번의 사이클이 끝나면 15~30분간 긴 휴식을 취합니다. 시릴로가 대학생 시절 사용한 토마토 모양 주방 타이머에서 이름을 따온 이 기법은 전 세계에서 가장 인기 있는 생산성 방법론 중 하나가 되었습니다.",
+      "신경과학 연구는 이 핵심 아이디어를 뒷받침합니다. 우리의 뇌는 장시간 지속적인 집중을 위해 설계되지 않았습니다. 연구에 따르면 약 20분간의 연속 작업 후 주의력이 감소하기 시작합니다. 뽀모도로 기법은 본질적으로 우리 생체 리듬에 맞서기보다 함께 작동하며, 하루 종일 일관된 집중력을 유지하도록 정기적인 리셋 포인트를 제공합니다.",
+      "비판론자들은 코딩이나 글쓰기 같은 심층 작업에서 25분은 너무 짧게 느껴질 수 있다고 지적합니다. 몰입 상태에 들어가려면 시간이 필요하기 때문입니다. 많은 실천가들이 50분 작업 블록을 사용하거나 최고 몰입 상태에서 타이머를 멈추는 등 기법을 변형합니다. 핵심 교훈은 특정 간격이 아니라 더 넓은 원칙일 수 있습니다. 구조화된 휴식이 생산성을 떨어뜨리는 것이 아니라 오히려 높인다는 것입니다."
+    ]
+  },
+  {
+    title_en: "How Coffee Affects Your Work Performance",
+    title_ko: "커피가 업무 성과에 미치는 영향",
+    en: [
+      "For millions of professionals, the workday doesn't truly begin until the first cup of coffee. Caffeine is the world's most widely consumed psychoactive substance, and for good reason — it blocks adenosine receptors in the brain, temporarily warding off drowsiness and enhancing alertness. Research shows that moderate consumption (about 3 to 4 cups per day) can improve reaction time, logical reasoning, and short-term memory.",
+      "However, timing matters more than most people realize. Cortisol, the body's natural alertness hormone, peaks between 8 and 9 AM. Drinking coffee during this window provides diminishing returns because your body is already at peak wakefulness. Sleep scientists recommend waiting until mid-morning — around 9:30 to 11:30 AM — for your first cup to get the maximum cognitive benefit.",
+      "The afternoon coffee habit carries hidden costs. Caffeine has a half-life of roughly 5 to 6 hours, meaning a 3 PM espresso still has half its caffeine active at 8 or 9 PM. This quietly disrupts deep sleep cycles, leaving you more tired the next morning — and more dependent on that first cup. Breaking this cycle may be the single most effective productivity hack available."
+    ],
+    ko: [
+      "수백만 직장인에게 업무일은 첫 잔의 커피가 있기 전까지 진정으로 시작되지 않습니다. 카페인은 세계에서 가장 널리 소비되는 향정신성 물질이며, 그럴만한 이유가 있습니다. 뇌의 아데노신 수용체를 차단하여 일시적으로 졸음을 막고 각성 상태를 높여줍니다. 연구에 따르면 적정량의 섭취(하루 약 3~4잔)는 반응 시간, 논리적 추론, 단기 기억력을 향상시킬 수 있습니다.",
+      "하지만 대부분의 사람들이 인식하는 것보다 타이밍이 중요합니다. 신체의 자연적 각성 호르몬인 코르티솔은 오전 8시에서 9시 사이에 최고치에 달합니다. 이 시간대에 커피를 마시면 신체가 이미 최고 각성 상태에 있기 때문에 수확체감의 효과가 나타납니다. 수면 과학자들은 최대 인지 효과를 얻으려면 오전 9시 30분에서 11시 30분 사이, 즉 오전 중반까지 기다릴 것을 권장합니다.",
+      "오후 커피 습관에는 숨겨진 대가가 있습니다. 카페인의 반감기는 약 5~6시간으로, 오후 3시의 에스프레소는 밤 8~9시에도 카페인의 절반이 여전히 활성 상태입니다. 이는 조용히 깊은 수면 주기를 방해하여 다음 날 아침 더 피곤하게 만들고 첫 잔에 대한 의존도를 높입니다. 이 악순환을 끊는 것이야말로 가장 효과적인 생산성 해킹일 수 있습니다."
+    ]
+  },
+  {
+    title_en: "The Rise of the 4-Day Work Week",
+    title_ko: "주 4일 근무제의 부상",
+    en: [
+      "Iceland's landmark trial of the four-day work week between 2015 and 2019 involved over 2,500 workers — more than one percent of the country's entire workforce. The results were striking: productivity remained the same or improved in the majority of workplaces, while employee well-being increased dramatically. Since then, similar pilots have launched in the UK, Japan, Spain, and several US companies.",
+      "Microsoft Japan's experiment in 2019 saw a staggering 40 percent boost in productivity after switching to a four-day week. Meetings were shortened from 60 to 30 minutes, and employees reported feeling more focused and energized. The compressed schedule forced teams to prioritize ruthlessly, eliminating unnecessary tasks and streamlining communication.",
+      "Skeptics raise valid concerns about industries that require continuous coverage — healthcare, customer service, and manufacturing among them. The most successful implementations have used staggered schedules rather than giving everyone the same day off. The debate is no longer whether shorter work weeks can work, but how to implement them without sacrificing service quality."
+    ],
+    ko: [
+      "아이슬란드는 2015년부터 2019년까지 2,500명 이상의 근로자가 참여한 획기적인 주 4일 근무제 실험을 진행했는데, 이는 전체 노동인구의 1% 이상에 해당합니다. 결과는 놀라웠습니다. 대부분의 직장에서 생산성이 동일하거나 향상되었으며, 직원 복지는 극적으로 증가했습니다. 이후 영국, 일본, 스페인 및 여러 미국 기업에서 유사한 시범 사업이 시작되었습니다.",
+      "마이크로소프트 일본 지사의 2019년 실험에서는 주 4일제로 전환한 후 생산성이 무려 40%나 향상되었습니다. 회의 시간은 60분에서 30분으로 단축되었고, 직원들은 더 집중하고 활력이 넘친다고 보고했습니다. 압축된 일정은 팀들이 불필요한 업무를 제거하고 소통을 간소화하며 냉정하게 우선순위를 정하도록 만들었습니다.",
+      "회의론자들은 의료, 고객 서비스, 제조업 등 지속적인 인력 배치가 필요한 산업에 대해 타당한 우려를 제기합니다. 가장 성공적인 도입 사례에서는 모두에게 같은 날 쉬게 하지 않고 교대 일정을 사용했습니다. 이제 논쟁은 짧은 근무 주가 효과가 있는지 여부가 아니라, 서비스 품질을 희생하지 않고 어떻게 시행할 것인가에 대한 것입니다."
+    ]
+  },
+  {
+    title_en: "Digital Detox: Reclaiming Focus in a Notification World",
+    title_ko: "디지털 디톡스: 알림 세상에서 집중력 되찾기",
+    en: [
+      "The average professional checks their phone 96 times a day and receives over 60 push notifications. Each interruption, no matter how brief, triggers a context switch that takes an average of 23 minutes to fully recover from. Over the course of a workday, these micro-distractions can consume nearly a third of productive time without us even realizing it.",
+      "The digital detox movement isn't about abandoning technology entirely. Instead, it advocates for intentional boundaries — turning off non-essential notifications, batching email checks to specific times, and designating phone-free zones during deep work sessions. Companies like Basecamp have adopted 'library rules' for their offices, where the default expectation is quiet, focused work.",
+      "Practical strategies that have gained traction include the 'two-device rule' — using a laptop for work and keeping the phone in another room — and scheduled 'focus blocks' on shared calendars that colleagues learn to respect. The goal isn't to be unreachable, but to shift from reactive mode to proactive mode, choosing when to engage rather than being pulled in by every ping."
+    ],
+    ko: [
+      "평균적인 직장인은 하루에 96번 휴대폰을 확인하고 60개 이상의 푸시 알림을 받습니다. 아무리 짧은 방해라도 각 중단은 완전히 회복하는 데 평균 23분이 걸리는 컨텍스트 전환을 유발합니다. 하루 업무 시간 동안 이러한 미세한 방해 요소는 우리가 인식하지도 못한 채 생산적 시간의 거의 3분의 1을 소모할 수 있습니다.",
+      "디지털 디톡스 운동은 기술을 완전히 포기하는 것이 아닙니다. 대신 의도적인 경계를 주장합니다. 필수적이지 않은 알림을 끄고, 이메일 확인을 특정 시간대에 묶어서 하며, 심층 작업 시간 동안 휴대폰 금지 구역을 지정하는 것입니다. 베이스캠프 같은 기업은 사무실에 '도서관 규칙'을 도입하여 기본 기대치를 조용하고 집중된 작업으로 설정했습니다.",
+      "주목받는 실용적 전략으로는 노트북은 업무용으로 사용하고 휴대폰은 다른 방에 두는 '두 기기 규칙'과 동료들이 존중하도록 배우는 공유 캘린더의 '집중 블록'이 있습니다. 목표는 연락이 안 되는 것이 아니라, 반응적 모드에서 주도적 모드로 전환하여 모든 알림에 끌려다니지 않고 언제 참여할지 스스로 선택하는 것입니다."
+    ]
+  },
+  {
+    title_en: "Why Walking Meetings Are the New Brainstorm",
+    title_ko: "걸어다니는 회의가 새로운 브레인스토밍인 이유",
+    en: [
+      "Steve Jobs was famous for his walking meetings, and it turns out he was onto something backed by science. A Stanford study found that walking boosts creative output by an average of 60 percent compared to sitting. The effect persists even after sitting back down — participants who had just walked generated significantly more novel ideas in subsequent brainstorming sessions.",
+      "The benefits extend beyond creativity. Walking meetings naturally limit attendance to two or three people, which eliminates the 'too many cooks' problem plaguing conference rooms. They also tend to be shorter and more focused, since there are no slides to hide behind and no laptops to distract. The physical movement reduces the social hierarchy that formal meeting rooms reinforce.",
+      "Companies like LinkedIn and Twitter have built walking paths around their campuses specifically for this purpose. For those without sprawling tech campuses, even a lap around the block works. The key is matching the meeting type to the format — walking meetings excel for one-on-ones, brainstorming, and feedback conversations, but are less suited for detailed technical reviews or presentations."
+    ],
+    ko: [
+      "스티브 잡스는 걸으며 하는 회의로 유명했는데, 이것이 과학적 근거가 있는 것으로 밝혀졌습니다. 스탠퍼드의 연구에 따르면 걷기는 앉아 있을 때에 비해 창의적 결과물을 평균 60% 증가시킵니다. 이 효과는 다시 앉은 후에도 지속됩니다. 방금 걸었던 참가자들은 이어지는 브레인스토밍 세션에서 훨씬 더 많은 참신한 아이디어를 생성했습니다.",
+      "이점은 창의성을 넘어 확장됩니다. 걷는 회의는 자연스럽게 참석자를 두세 명으로 제한하여 회의실을 괴롭히는 '사공이 너무 많은' 문제를 해결합니다. 또한 뒤에 숨을 슬라이드도, 집중을 방해할 노트북도 없기 때문에 회의가 더 짧고 집중적인 경향이 있습니다. 신체적 움직임은 공식적인 회의실이 강화하는 사회적 위계를 줄여줍니다.",
+      "링크드인과 트위터 같은 기업들은 이 목적을 위해 캠퍼스 주변에 산책로를 만들었습니다. 넓은 기술 캠퍼스가 없는 경우에도 블록 한 바퀴를 도는 것만으로 충분합니다. 핵심은 회의 유형을 형식에 맞추는 것입니다. 걷는 회의는 1:1 면담, 브레인스토밍, 피드백 대화에 탁월하지만, 세부적인 기술 검토나 프레젠테이션에는 적합하지 않습니다."
+    ]
+  },
+  {
+    title_en: "The Psychology of Inbox Zero",
+    title_ko: "인박스 제로의 심리학",
+    en: [
+      "The average office worker receives 121 emails per day. For many, the inbox becomes a source of chronic low-grade anxiety — a never-ending to-do list that follows you everywhere. The 'Inbox Zero' methodology, popularized by productivity expert Merlin Mann, proposes a radical idea: your inbox should be empty at the end of each processing session. Not because every email is answered, but because every email is decided upon.",
+      "The system rests on five possible actions for each message: delete, delegate, respond, defer, or do. The critical insight is that leaving emails unprocessed is itself a decision — one that creates mental overhead. Each unread message represents an open loop in your brain, consuming cognitive resources even when you're not actively thinking about it. Psychologists call this the Zeigarnik effect.",
+      "Critics argue that obsessing over an empty inbox is itself a productivity trap. Research from the University of British Columbia found that limiting email checks to three times per day significantly reduced stress while having no negative impact on work outcomes. The real lesson may be simpler than any system: the inbox is a communication tool, not a task manager, and treating it as one is where the trouble begins."
+    ],
+    ko: [
+      "평균적인 사무직 근로자는 하루에 121통의 이메일을 받습니다. 많은 사람에게 받은편지함은 만성적인 경미한 불안의 원천이 됩니다. 어디든 따라오는 끝나지 않는 할 일 목록인 셈입니다. 생산성 전문가 멀린 만이 대중화한 '인박스 제로' 방법론은 급진적인 아이디어를 제안합니다. 모든 이메일에 답장했기 때문이 아니라, 모든 이메일에 대해 결정을 내렸기 때문에 받은편지함이 비어야 한다는 것입니다.",
+      "이 시스템은 각 메시지에 대한 다섯 가지 가능한 행동에 기반합니다: 삭제, 위임, 응답, 보류, 또는 실행. 핵심 통찰은 이메일을 처리하지 않은 채 두는 것 자체가 하나의 결정이며, 정신적 부담을 만든다는 것입니다. 처리하지 않은 각 메시지는 뇌에서 열린 루프를 나타내며, 적극적으로 생각하고 있지 않을 때에도 인지적 자원을 소모합니다. 심리학자들은 이를 자이가르닉 효과라고 부릅니다.",
+      "비판론자들은 빈 받은편지함에 집착하는 것 자체가 생산성의 함정이라고 주장합니다. 브리티시 컬럼비아 대학의 연구에 따르면 이메일 확인을 하루 세 번으로 제한하면 업무 성과에 부정적인 영향 없이 스트레스가 크게 감소했습니다. 진정한 교훈은 어떤 시스템보다 더 단순할 수 있습니다. 받은편지함은 커뮤니케이션 도구이지 작업 관리자가 아니며, 작업 관리자로 취급하는 것이 문제의 시작입니다."
+    ]
+  },
+  {
+    title_en: "Standing Desks: Hype or Health Revolution?",
+    title_ko: "스탠딩 데스크: 과대 광고인가, 건강 혁명인가?",
+    en: [
+      "Standing desks have become a ubiquitous fixture in modern offices, fueled by alarming headlines comparing prolonged sitting to smoking. The global standing desk market is projected to reach 12 billion dollars by 2028. But do they actually deliver on their health promises, or have we fallen for the most expensive placebo in office furniture history?",
+      "The evidence is mixed. A study published in the British Medical Journal found that standing desk users had lower levels of fatigue, anxiety, and sedentary time. However, simply standing all day comes with its own problems — increased risk of varicose veins, foot pain, and back discomfort. The consensus among ergonomics researchers is that the magic lies not in standing, but in alternating between sitting and standing throughout the day.",
+      "The real takeaway is that no single posture is healthy if held for hours. The best desk setup may be a sit-stand desk paired with a timer reminding you to switch positions every 30 to 45 minutes. Some companies have gone further, offering treadmill desks and under-desk ellipticals. But the simplest and most effective intervention remains the oldest: just get up and walk around regularly."
+    ],
+    ko: [
+      "스탠딩 데스크는 장시간 앉아 있는 것을 흡연에 비유하는 충격적인 헤드라인에 힘입어 현대 사무실의 보편적인 비품이 되었습니다. 전 세계 스탠딩 데스크 시장은 2028년까지 120억 달러에 달할 것으로 전망됩니다. 하지만 실제로 건강에 대한 약속을 이행하는 것일까요, 아니면 사무용 가구 역사상 가장 비싼 플라시보에 속은 것일까요?",
+      "증거는 엇갈립니다. 영국의학저널에 게재된 연구에 따르면 스탠딩 데스크 사용자는 피로감, 불안감, 앉아 있는 시간이 더 적었습니다. 그러나 단순히 하루 종일 서 있는 것도 하지정맥류 위험 증가, 발 통증, 허리 불편감 등 자체적인 문제가 있습니다. 인체공학 연구자들 사이의 합의는 마법이 서 있는 것 자체가 아니라 하루 종일 앉기와 서기를 번갈아 하는 데 있다는 것입니다.",
+      "진정한 교훈은 어떤 자세도 몇 시간 동안 유지하면 건강에 좋지 않다는 것입니다. 최적의 데스크 설정은 좌식-입식 겸용 데스크에 30~45분마다 자세를 바꾸라고 알려주는 타이머를 함께 사용하는 것입니다. 일부 기업은 트레드밀 데스크와 책상 아래 타원형 운동기구를 제공하며 더 나아갔습니다. 하지만 가장 간단하고 효과적인 해결책은 가장 오래된 것입니다. 정기적으로 일어나서 걸어 다니는 것입니다."
+    ]
+  },
+  {
+    title_en: "Side Projects: The Secret Weapon of Top Performers",
+    title_ko: "사이드 프로젝트: 최고 성과자들의 비밀 무기",
+    en: [
+      "Gmail started as a side project. So did Slack, Twitter, and Craigslist. Google famously allowed its engineers to spend 20 percent of their time on personal projects, a policy that produced some of the company's most successful products. While few companies still formally offer this perk, the principle behind it remains powerful: unstructured creative time fuels innovation.",
+      "Side projects serve as a low-pressure sandbox where professionals can experiment with new technologies, develop skills outside their job description, and maintain the curiosity that formal work structures often suppress. A survey by Stack Overflow found that 80 percent of developers work on side projects, and those who do report higher job satisfaction — even when the projects have nothing to do with their day jobs.",
+      "The trick is managing side projects sustainably. Burnout is a real risk when evening hours become a second shift. Experts recommend limiting side project work to a few focused hours per week and choosing projects that energize rather than drain. The most valuable side projects aren't the ones that become startups — they're the ones that keep you learning and remind you why you fell in love with your craft."
+    ],
+    ko: [
+      "Gmail은 사이드 프로젝트로 시작되었습니다. 슬랙, 트위터, 크레이그스리스트도 마찬가지입니다. 구글은 엔지니어들이 시간의 20%를 개인 프로젝트에 쓸 수 있도록 허용한 것으로 유명하며, 이 정책은 회사의 가장 성공적인 제품 일부를 탄생시켰습니다. 이 혜택을 공식적으로 제공하는 기업은 거의 없지만, 그 이면의 원칙은 여전히 강력합니다. 비구조화된 창작 시간이 혁신을 촉진한다는 것입니다.",
+      "사이드 프로젝트는 전문가들이 새로운 기술을 실험하고, 직무 범위 밖의 역량을 개발하며, 공식적인 업무 구조가 종종 억압하는 호기심을 유지할 수 있는 저압력 실험장 역할을 합니다. Stack Overflow의 조사에 따르면 개발자의 80%가 사이드 프로젝트를 하고 있으며, 그렇게 하는 사람들은 프로젝트가 본업과 전혀 관련이 없더라도 더 높은 직업 만족도를 보고합니다.",
+      "비결은 사이드 프로젝트를 지속 가능하게 관리하는 것입니다. 저녁 시간이 두 번째 근무 시간이 되면 번아웃은 현실적인 위험입니다. 전문가들은 사이드 프로젝트 작업을 주당 몇 시간의 집중 시간으로 제한하고 소진시키기보다 활력을 주는 프로젝트를 선택할 것을 권장합니다. 가장 가치 있는 사이드 프로젝트는 스타트업이 되는 것이 아니라, 계속 배우게 하고 자신의 분야를 사랑하게 된 이유를 상기시켜 주는 것입니다."
+    ]
+  },
+  {
+    title_en: "The Science of Power Naps at Work",
+    title_ko: "직장에서의 파워낮잠, 그 과학적 근거",
+    en: [
+      "NASA discovered that a 26-minute nap improved pilot performance by 34 percent and alertness by 54 percent. Companies like Google, Nike, and Samsung have installed dedicated nap pods in their offices, signaling a cultural shift away from the 'sleep when you're dead' mentality that once dominated corporate culture. The science is unambiguous: short naps make you better at your job.",
+      "The ideal nap length is between 10 and 20 minutes. This keeps you in the lighter stages of sleep, making it easy to wake up refreshed rather than groggy. Naps longer than 30 minutes risk entering deep sleep, which can cause sleep inertia — that disoriented, foggy feeling that's worse than not napping at all. Timing also matters: the post-lunch dip between 1 and 3 PM is the biological sweet spot.",
+      "Despite the evidence, workplace napping still carries stigma in many cultures. Employees worry about being perceived as lazy, even as they struggle through unproductive afternoons fueled by their third coffee. Forward-thinking companies are reframing naps as a performance tool rather than a sign of weakness. In a knowledge economy where mental sharpness is the primary output, ignoring sleep science is simply bad management."
+    ],
+    ko: [
+      "NASA는 26분의 낮잠이 조종사의 성과를 34%, 주의력을 54% 향상시킨다는 것을 발견했습니다. 구글, 나이키, 삼성 같은 기업들은 사무실에 전용 수면 캡슐을 설치하여, 한때 기업 문화를 지배했던 '죽으면 자라'는 사고방식에서의 문화적 전환을 보여주고 있습니다. 과학은 명확합니다. 짧은 낮잠은 업무 능력을 향상시킵니다.",
+      "이상적인 낮잠 길이는 10분에서 20분 사이입니다. 이렇게 하면 가벼운 수면 단계에 머물러 멍한 상태가 아닌 상쾌한 상태로 깨어날 수 있습니다. 30분 이상의 낮잠은 깊은 수면에 진입할 위험이 있어, 낮잠을 자지 않는 것보다 더 나쁜 방향 감각 상실과 안개 낀 듯한 느낌인 수면 관성을 유발할 수 있습니다. 타이밍도 중요합니다. 점심 후 오후 1시에서 3시 사이의 졸음이 생물학적 최적 시간대입니다.",
+      "증거에도 불구하고 직장에서의 낮잠은 많은 문화에서 여전히 편견을 안고 있습니다. 직원들은 세 번째 커피에 의존하며 비생산적인 오후를 힘겹게 보내면서도 게으르다고 인식될까 걱정합니다. 선진적인 기업들은 낮잠을 나약함의 표시가 아닌 성과 도구로 재정의하고 있습니다. 정신적 날카로움이 주요 산출물인 지식 경제에서 수면 과학을 무시하는 것은 단순히 잘못된 경영입니다."
+    ]
+  }
+];
 
-// ── Fake Meanings ──
 const fakeMeanings = {
-  "microservices": "마이크로서비스 — 소규모 독립 배포 가능한 서비스 단위",
-  "architecture": "아키텍처 — 시스템의 구조적 설계 방식",
-  "scalable": "확장 가능한 — 부하 증가에 유연하게 대응 가능한",
-  "cloud-native": "클라우드 네이티브 — 클라우드 환경에 최적화된",
-  "monolithic": "모놀리식 — 하나의 덩어리로 구성된 시스템 구조",
-  "deploy": "배포하다 — 소프트웨어를 운영 환경에 릴리스하는 것",
-  "iterate": "반복하다 — 개선을 위해 반복적으로 수정하는 것",
-  "observability": "관측 가능성 — 시스템 내부 상태를 외부에서 파악하는 능력",
-  "anomalies": "이상 징후 — 정상 패턴에서 벗어나는 비정상적 현상",
-  "incidents": "인시던트 — 서비스 장애 또는 운영 이슈",
-  "latency": "지연 시간 — 요청 후 응답까지 걸리는 시간",
-  "inference": "추론 — AI 모델이 입력 데이터로부터 결과를 도출하는 과정",
-  "production": "프로덕션 — 실제 사용자가 접근하는 운영 환경",
-  "마이크로서비스": "microservices — small, independently deployable service units",
-  "아키텍처": "architecture — structural design of a system",
-  "관측": "observation — the act of monitoring system state",
-  "배포": "deployment — releasing software to a live environment",
-  "프로덕션": "production — the live environment users interact with",
-  "컴포넌트": "component — a modular, reusable building block",
-  "인시던트": "incident — a service disruption or operational issue",
+  "remote": "(형) 원격의 — 물리적으로 떨어진 상태에서 수행하는",
+  "hybrid": "(명) 하이브리드 — 두 가지 이상을 결합한 혼합 방식",
+  "productivity": "(명) 생산성 — 투입 대비 산출의 효율성",
+  "flexibility": "(명) 유연성 — 상황에 맞게 조정 가능한 성질",
+  "commute": "(명/동) 통근 — 집과 직장 사이를 오가는 것",
+  "collaboration": "(명) 협업 — 공동 목표를 위해 함께 일하는 것",
+  "breakthrough": "(명) 돌파구 — 중요한 발전이나 발견",
+  "vacancy": "(명) 공실 — 비어 있는 사무실이나 주거 공간",
+  "revolution": "(명) 혁명 — 근본적이고 급격한 변화",
+  "technique": "(명) 기법 — 특정 작업을 수행하는 체계적 방법",
+  "neuroscience": "(명) 신경과학 — 뇌와 신경계를 연구하는 학문",
+  "sustained": "(형) 지속적인 — 중단 없이 계속되는",
+  "flow": "(명) 몰입 — 활동에 완전히 빠져드는 정신 상태",
+  "interval": "(명) 간격 — 두 시점 사이의 시간 구간",
+  "caffeine": "(명) 카페인 — 커피 등에 포함된 각성 물질",
+  "adenosine": "(명) 아데노신 — 졸음을 유발하는 뇌 내 화학물질",
+  "cortisol": "(명) 코르티솔 — 스트레스 및 각성 관련 호르몬",
+  "cognitive": "(형) 인지적인 — 사고, 학습, 기억과 관련된",
+  "half-life": "(명) 반감기 — 물질의 농도가 절반으로 줄어드는 시간",
+  "disrupts": "(동) 방해하다 — 정상적인 진행을 중단시키다",
+  "pilot": "(명) 시범 사업 — 본격 도입 전 테스트 운영",
+  "staggered": "(형) 시차를 둔 — 동시가 아닌 순차적으로 배치된",
+  "compressed": "(형) 압축된 — 더 짧은 기간에 집약된",
+  "well-being": "(명) 복지/안녕 — 건강하고 행복한 상태",
+  "prioritize": "(동) 우선순위를 정하다 — 중요한 것을 먼저 처리하다",
+  "notification": "(명) 알림 — 새로운 정보를 알려주는 메시지",
+  "context": "(명) 맥락 — 상황이나 환경의 전후 관계",
+  "intentional": "(형) 의도적인 — 목적을 가지고 계획적으로 하는",
+  "proactive": "(형) 주도적인 — 상황에 미리 대응하는",
+  "reactive": "(형) 반응적인 — 상황이 발생한 후 대응하는",
+  "brainstorm": "(명/동) 브레인스토밍 — 자유롭게 아이디어를 내는 것",
+  "hierarchy": "(명) 위계 — 조직 내 상하 관계 구조",
+  "novel": "(형) 참신한 — 새롭고 독창적인",
+  "inbox": "(명) 받은편지함 — 이메일이 도착하는 공간",
+  "delegate": "(동) 위임하다 — 업무를 다른 사람에게 맡기다",
+  "defer": "(동) 보류하다 — 나중으로 미루다",
+  "methodology": "(명) 방법론 — 체계적인 작업 수행 방식",
+  "ergonomics": "(명) 인체공학 — 인간에 맞춘 환경 설계 학문",
+  "sedentary": "(형) 앉아서 하는 — 신체 활동이 적은",
+  "posture": "(명) 자세 — 몸을 유지하는 형태",
+  "placebo": "(명) 플라시보 — 실제 효과 없이 심리적으로만 작용하는 것",
+  "sandbox": "(명) 샌드박스 — 안전하게 실험할 수 있는 환경",
+  "sustainable": "(형) 지속 가능한 — 장기적으로 유지 가능한",
+  "burnout": "(명) 번아웃 — 과도한 업무로 인한 탈진 상태",
+  "curiosity": "(명) 호기심 — 새로운 것을 알고 싶어하는 욕구",
+  "alertness": "(명) 주의력 — 깨어있고 민첩하게 반응하는 상태",
+  "stigma": "(명) 편견 — 부정적으로 바라보는 사회적 인식",
+  "inertia": "(명) 관성 — 현재 상태를 유지하려는 성질",
+  "reframing": "(명) 재정의 — 다른 관점에서 바라보는 것",
+  "생산성": "productivity — efficiency of output relative to input",
+  "재택근무": "remote work — working from home or outside the office",
+  "통근": "commute — traveling between home and workplace",
+  "유연성": "flexibility — ability to adapt to changing conditions",
+  "집중력": "focus — the ability to concentrate on a task",
+  "알림": "notification — a message alerting you to new info",
+  "번아웃": "burnout — exhaustion from overwork",
+  "브레인스토밍": "brainstorming — freely generating ideas",
+  "호기심": "curiosity — desire to learn something new",
 };
 
 function getFakeMeaning(word) {
@@ -543,29 +760,49 @@ function getFakeMeaning(word) {
   if (fakeMeanings[lower]) return fakeMeanings[lower];
   if (fakeMeanings[word]) return fakeMeanings[word];
   const meanings = [
-    "(명) 기술적 맥락에서 사용되는 전문 용어",
-    "(동) 특정 작업을 수행하거나 실행하다",
-    "(형) 시스템 또는 프로세스의 특성을 나타내는",
-    "(명) IT 산업에서 널리 쓰이는 핵심 개념",
+    "(명) 비즈니스 환경에서 자주 쓰이는 핵심 용어",
+    "(동) 업무나 프로세스를 수행하거나 실행하다",
+    "(형) 업무 또는 조직의 특성을 나타내는 표현",
+    "(명) 직장 생활에서 널리 쓰이는 실용적 개념",
   ];
   return meanings[word.length % meanings.length];
 }
 
-// ── Render Article ──
-function renderArticle() {
-  const content = document.getElementById('articleContent');
-  const paragraphs = articles[currentTab];
-  content.innerHTML = paragraphs.map(p => `<p>${p}</p>`).join('');
+function renderSidebar() {
+  const sidebar = document.querySelector('.sidebar');
+  const label = sidebar.querySelector('.sidebar-label');
+  sidebar.innerHTML = '';
+  sidebar.appendChild(label);
+  articles.forEach((_, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'sidebar-item' + (i === currentDay ? ' active' : '');
+    btn.textContent = i + 1;
+    btn.onclick = () => selectDay(i);
+    sidebar.appendChild(btn);
+  });
 }
 
-// ── Tab Switch ──
+function selectDay(index) {
+  currentDay = index;
+  renderSidebar();
+  renderArticle();
+  hideDiffResult();
+}
+
+function renderArticle() {
+  const a = articles[currentDay];
+  document.getElementById('articleTitle').textContent = currentTab === 'en' ? a.title_en : a.title_ko;
+  const paragraphs = currentTab === 'en' ? a.en : a.ko;
+  document.getElementById('articleContent').innerHTML = paragraphs.map(p => `<p>${p}</p>`).join('');
+}
+
 function switchTab(tab) {
   currentTab = tab;
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
-  document.getElementById('rightTitle').textContent = tab === 'en' ? '나의 번역' : '나의 영작';
+  document.getElementById('rightTitle').textContent = tab === 'en' ? 'My Translation' : 'My Writing';
   document.getElementById('userEditor').placeholder = tab === 'en'
-    ? '영문 아티클을 읽고, 한국어로 번역해 보세요...'
-    : '한글 번역본을 읽고, 영어로 영작해 보세요...';
+    ? '영문 아티클을 읽고 한국어로 번역해 보세요...'
+    : '한글 번역본을 읽고 영어로 영작해 보세요...';
   renderArticle();
   hideTooltip();
   hideDiffResult();
@@ -578,25 +815,21 @@ document.getElementById('articleContent').addEventListener('dblclick', function(
   const sel = window.getSelection();
   const word = sel.toString().trim();
   if (!word || word.includes(' ')) return;
-
   selectedWord = word;
-
   const range = sel.getRangeAt(0);
   let contextNode = range.startContainer;
   while (contextNode && contextNode.nodeName !== 'P') contextNode = contextNode.parentNode;
   selectedContext = contextNode ? contextNode.textContent.substring(0, 120) + '...' : '';
-
   selectedMeaning = getFakeMeaning(word);
-
   const rect = range.getBoundingClientRect();
   const tip = document.getElementById('tooltip');
   document.getElementById('tooltipWord').textContent = word;
   document.getElementById('tooltipMeaning').textContent = selectedMeaning;
   document.getElementById('tooltipContext').textContent = `"${selectedContext}"`;
-
-  let left = rect.left + rect.width / 2 - 130;
+  let left = rect.left + rect.width / 2 - 120;
   let top = rect.bottom + 10;
   if (left < 10) left = 10;
+  if (left + 300 > window.innerWidth) left = window.innerWidth - 310;
   if (top + 200 > window.innerHeight) top = rect.top - 180;
   tip.style.left = left + 'px';
   tip.style.top = top + 'px';
@@ -604,111 +837,85 @@ document.getElementById('articleContent').addEventListener('dblclick', function(
 });
 
 document.addEventListener('click', function(e) {
-  if (!e.target.closest('.tooltip') && !window.getSelection().toString().trim()) {
-    hideTooltip();
-  }
+  if (!e.target.closest('.tooltip') && !window.getSelection().toString().trim()) hideTooltip();
 });
 
-// ── Add to Vocab ──
+// ── Supabase CRUD ──
 async function addToVocab() {
   hideTooltip();
   try {
-    const { error } = await sb.from('vocabulary').insert({
-      word: selectedWord,
-      meaning: selectedMeaning,
-      context: selectedContext
-    });
-    if (error) {
-      showToast('저장 실패: ' + error.message);
-    } else {
-      showToast(`"${selectedWord}" 단어가 단어장에 추가되었습니다.`);
-    }
+    const { error } = await sb.from('vocabulary').insert({ word: selectedWord, meaning: selectedMeaning, context: selectedContext });
+    if (error) { showToast('저장 실패: ' + error.message); }
+    else { showToast(`"${selectedWord}" 단어장에 추가되었습니다.`); }
   } catch (e) {
-    showToast('서버 연결 실패 — Supabase 프로젝트가 활성 상태인지 확인해 주세요.');
+    showToast('서버 연결 실패 — Supabase 프로젝트 상태를 확인해 주세요.');
     console.error('addToVocab network error:', e);
   }
 }
 
-// ── Vocab Modal ──
 async function openVocabModal() {
   document.getElementById('vocabModal').classList.add('show');
   await loadVocab();
 }
-function closeVocabModal() {
-  document.getElementById('vocabModal').classList.remove('show');
-}
-document.getElementById('vocabModal').addEventListener('click', function(e) {
-  if (e.target === this) closeVocabModal();
-});
+function closeVocabModal() { document.getElementById('vocabModal').classList.remove('show'); }
+document.getElementById('vocabModal').addEventListener('click', function(e) { if (e.target === this) closeVocabModal(); });
 
 async function loadVocab() {
   const list = document.getElementById('vocabList');
   list.innerHTML = '<div class="vocab-empty">불러오는 중...</div>';
-
   let data, error;
   try {
     ({ data, error } = await sb.from('vocabulary').select('*').order('created_at', { ascending: false }));
   } catch (e) {
-    list.innerHTML = '<div class="vocab-empty">서버에 연결할 수 없습니다.<br>Supabase 프로젝트가 활성 상태인지 확인해 주세요.</div>';
+    list.innerHTML = '<div class="vocab-empty">서버에 연결할 수 없습니다.<br>Supabase 프로젝트 상태를 확인해 주세요.</div>';
     console.error('loadVocab network error:', e);
     return;
   }
-
-  if (error) {
-    list.innerHTML = `<div class="vocab-empty">조회 실패: ${error.message}</div>`;
-    return;
-  }
+  if (error) { list.innerHTML = `<div class="vocab-empty">조회 실패: ${error.message}</div>`; return; }
   if (!data || data.length === 0) {
     list.innerHTML = '<div class="vocab-empty">저장된 단어가 없습니다.<br>아티클에서 단어를 더블 클릭하여 추가해 보세요.</div>';
     return;
   }
-
   list.innerHTML = data.map(item => `
     <div class="vocab-item">
       <div class="vocab-info">
-        <div class="vocab-word">${escapeHtml(item.word)}</div>
-        <div class="vocab-meaning">${escapeHtml(item.meaning)}</div>
-        ${item.context ? `<div class="vocab-ctx">${escapeHtml(item.context)}</div>` : ''}
+        <div class="vocab-word">${esc(item.word)}</div>
+        <div class="vocab-meaning">${esc(item.meaning)}</div>
+        ${item.context ? `<div class="vocab-ctx">${esc(item.context)}</div>` : ''}
       </div>
       <button class="vocab-del" onclick="deleteVocab(${item.id})">삭제</button>
-    </div>
-  `).join('');
+    </div>`).join('');
 }
 
 async function deleteVocab(id) {
   try {
     const { error } = await sb.from('vocabulary').delete().eq('id', id);
-    if (error) {
-      showToast('삭제 실패: ' + error.message);
-    } else {
-      showToast('단어가 삭제되었습니다.');
-      await loadVocab();
-    }
+    if (error) { showToast('삭제 실패: ' + error.message); }
+    else { showToast('단어가 삭제되었습니다.'); await loadVocab(); }
   } catch (e) {
-    showToast('서버 연결 실패 — Supabase 프로젝트가 활성 상태인지 확인해 주세요.');
+    showToast('서버 연결 실패 — Supabase 프로젝트 상태를 확인해 주세요.');
     console.error('deleteVocab network error:', e);
   }
 }
 
-// ── AI Correction (Mock) ──
+// ── AI Mock ──
 const mockResults = {
   en: {
-    original: "The microservice architecture is become standard for build scalable application. Team can deploy and scale component independently.",
-    corrected: "Microservices architecture has become the standard for building scalable applications. Teams can deploy and scale components independently.",
+    original: "Remote work is become standard for many company. Employee want more flexibility and better balance.",
+    corrected: "Remote work has become standard for many companies. Employees want more flexibility and a better work-life balance.",
     comments: [
-      { type: 'grammar', text: '<strong>관사 & 복수형:</strong> "The microservice" → "Microservices" — 일반적인 개념을 지칭할 때는 무관사 복수형을 사용합니다.' },
-      { type: 'grammar', text: '<strong>시제 오류:</strong> "is become" → "has become" — 현재완료 시제로 과거부터 현재까지의 상태 변화를 표현합니다.' },
-      { type: 'grammar', text: '<strong>동명사:</strong> "for build" → "for building" — 전치사 뒤에는 동명사(V-ing)를 사용합니다.' },
-      { type: 'style', text: '<strong>주어-동사 수 일치:</strong> "Team can" → "Teams can" — 복수 주어와 동사를 일치시킵니다.' },
+      { text: '<strong>시제:</strong> "is become" → "has become" — 현재완료 시제를 사용합니다.' },
+      { text: '<strong>복수형:</strong> "many company" → "many companies" — many 뒤에는 복수 명사를 사용합니다.' },
+      { text: '<strong>관사 & 복합명사:</strong> "better balance" → "a better work-life balance" — 관사를 추가하고 구체적인 표현을 사용합니다.' },
     ]
   },
   ko: {
-    original: "Observability is not luxury anymore. Modern SRE team rely on three pillar of observability.",
-    corrected: "Observability is no longer a luxury. Modern SRE teams rely on the three pillars of observability.",
+    original: "Productivity is not about work more hours. It is about work smarter and take regular break.",
+    corrected: "Productivity is not about working more hours. It is about working smarter and taking regular breaks.",
     comments: [
-      { type: 'grammar', text: '<strong>관사:</strong> "not luxury" → "no longer a luxury" — 불가산/가산 명사 구분에 주의하고, "no longer"가 더 자연스러운 표현입니다.' },
-      { type: 'grammar', text: '<strong>복수형:</strong> "three pillar" → "three pillars" — 수사 뒤 명사는 복수형을 사용합니다.' },
-      { type: 'style', text: '<strong>정관사:</strong> "on three pillars" → "on the three pillars" — 잘 알려진 특정 개념을 지칭할 때 정관사 the를 사용합니다.' },
+      { text: '<strong>동명사:</strong> "about work more" → "about working more" — 전치사 about 뒤에는 동명사를 사용합니다.' },
+      { text: '<strong>병렬 구조:</strong> "work smarter and take" → "working smarter and taking" — 병렬 구조에서 동일한 형태를 유지합니다.' },
+      { text: '<strong>복수형:</strong> "regular break" → "regular breaks" — 일반적인 습관을 나타낼 때 복수형을 사용합니다.' },
     ]
   }
 };
@@ -719,48 +926,33 @@ function hideDiffResult() {
 }
 
 function requestAiCorrection() {
-  const editor = document.getElementById('userEditor');
-  if (!editor.value.trim()) {
-    showToast('먼저 텍스트를 입력해 주세요.');
-    return;
-  }
-
+  if (!document.getElementById('userEditor').value.trim()) { showToast('먼저 텍스트를 입력해 주세요.'); return; }
   const btn = document.getElementById('btnAi');
   const loading = document.getElementById('loadingArea');
   const diff = document.getElementById('diffResult');
-
   btn.disabled = true;
   diff.classList.remove('show');
   diff.innerHTML = '';
   loading.classList.add('show');
-
   setTimeout(() => {
     loading.classList.remove('show');
-
     const mock = currentTab === 'en' ? mockResults.en : mockResults.ko;
-
     diff.innerHTML = `
       <div class="diff-title">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
         AI 교정 결과
       </div>
       <div class="diff-block">
-        <div class="diff-line-del">− ${escapeHtml(mock.original)}</div>
-        <div class="diff-line-add">+ ${escapeHtml(mock.corrected)}</div>
+        <div class="diff-line-del">− ${esc(mock.original)}</div>
+        <div class="diff-line-add">+ ${esc(mock.corrected)}</div>
       </div>
-      ${mock.comments.map(c => `<div class="diff-comment">${c.text}</div>`).join('')}
-    `;
+      ${mock.comments.map(c => `<div class="diff-comment">${c.text}</div>`).join('')}`;
     diff.classList.add('show');
     btn.disabled = false;
   }, 2500);
 }
 
-// ── Utils ──
-function escapeHtml(str) {
-  const d = document.createElement('div');
-  d.textContent = str;
-  return d.innerHTML;
-}
+function esc(str) { const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
 
 function showToast(msg) {
   const t = document.getElementById('toast');
@@ -769,7 +961,7 @@ function showToast(msg) {
   setTimeout(() => t.classList.remove('show'), 2500);
 }
 
-// ── Init ──
+renderSidebar();
 renderArticle();
 </script>
 </body>
