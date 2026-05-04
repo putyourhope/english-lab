@@ -6,6 +6,7 @@ IEL 백엔드 파이프라인
 """
 
 import os
+import re
 import json
 import time
 import feedparser
@@ -46,10 +47,37 @@ def fetch_rss_entries():
                     "summary": entry.get("summary", ""),
                     "source": feed.feed.get("title", url),
                     "published": entry.get("published", ""),
+                    "image_url": extract_image(entry),
                 })
         except Exception as e:
             print(f"[RSS] {url} 실패: {e}")
     return entries
+
+
+def extract_image(entry):
+    """RSS 엔트리에서 대표 이미지 URL 추출"""
+    # media_content
+    media = entry.get("media_content", [])
+    if media:
+        for m in media:
+            url = m.get("url", "")
+            if url and any(ext in url.lower() for ext in [".jpg", ".jpeg", ".png", ".webp"]):
+                return url
+        if media[0].get("url"):
+            return media[0]["url"]
+
+    # media_thumbnail
+    thumbs = entry.get("media_thumbnail", [])
+    if thumbs and thumbs[0].get("url"):
+        return thumbs[0]["url"]
+
+    # og:image or <img> from summary/content HTML
+    html = entry.get("summary", "") + entry.get("content", [{}])[0].get("value", "") if entry.get("content") else entry.get("summary", "")
+    img_match = re.search(r'<img[^>]+src=["\']([^"\']+)["\']', html)
+    if img_match:
+        return img_match.group(1)
+
+    return None
 
 
 def filter_new_entries(entries):
@@ -71,6 +99,7 @@ Given an article title, link, and summary, produce a JSON object with this exact
   "title_ko": "한글 제목",
   "summary_ko": "200자 이내 한글 요약",
   "difficulty": 5,
+  "image_keyword": "one or two English words for article topic",
   "content": [
     {
       "en": "Original English sentence.",
@@ -92,6 +121,7 @@ CRITICAL RULES:
 - difficulty is 1-10 based on vocabulary/grammar complexity.
 - Each feedback has exactly 2 comments.
 - ideal translations should differ meaningfully from the literal ko/en to teach nuance.
+- image_keyword: 1-2 simple English words describing the article's core topic (e.g. "artificial intelligence", "remote work", "cybersecurity"). Used as a fallback image search term.
 - All output must be valid JSON. No markdown fences."""
 
 
@@ -117,6 +147,15 @@ Please create the IEL learning content JSON for this article."""
     return json.loads(resp.choices[0].message.content)
 
 
+def resolve_image_url(entry, data):
+    """RSS 이미지 → LLM 키워드 fallback"""
+    if entry.get("image_url"):
+        return entry["image_url"]
+    keyword = data.get("image_keyword", "technology")
+    safe_kw = keyword.replace(" ", "+")
+    return f"https://loremflickr.com/800/400/{safe_kw}"
+
+
 def save_to_supabase(entry, data):
     """Supabase articles 테이블에 저장"""
     row = {
@@ -127,6 +166,7 @@ def save_to_supabase(entry, data):
         "source_url": entry["link"],
         "date": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
         "content": json.dumps(data["content"], ensure_ascii=False),
+        "image_url": resolve_image_url(entry, data),
     }
 
     result = sb.table("articles").insert(row).execute()

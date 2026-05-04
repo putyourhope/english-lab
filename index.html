@@ -16,9 +16,10 @@
     --danger:#e74c5c; --success:#2ecc71;
     --diff-add-bg:rgba(16,185,129,0.10); --diff-add-border:#10b981;
     --diff-del-bg:rgba(231,76,92,0.08); --diff-del-border:#e74c5c;
-    --radius:10px; --radius-sm:6px;
+    --radius:16px; --radius-sm:10px;
     --shadow-sm:0 1px 3px rgba(0,0,0,0.06); --shadow-md:0 4px 16px rgba(0,0,0,0.08);
     --shadow-lg:0 12px 40px rgba(0,0,0,0.12); --transition:0.2s ease;
+    --spring:cubic-bezier(0.34,1.56,0.64,1);
   }
   body {
     font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Noto Sans KR',sans-serif;
@@ -34,7 +35,8 @@
   .loading-screen.hide { display:none; }
   .loading-content { text-align:center; }
   .loading-logo {
-    width:56px; height:56px; background:var(--accent); border-radius:14px;
+    width:56px; height:56px; background:var(--accent); border-radius:18px;
+    animation:popIn 0.6s var(--spring) both;
     display:grid; place-items:center; font-weight:800; font-size:18px;
     color:#fff; letter-spacing:-0.5px; margin:0 auto 24px;
   }
@@ -55,7 +57,7 @@
   }
   .header-left { display:flex; align-items:center; gap:10px; }
   .logo {
-    width:30px; height:30px; background:var(--accent); border-radius:8px;
+    width:30px; height:30px; background:var(--accent); border-radius:10px;
     display:grid; place-items:center; font-weight:800; font-size:11px;
     color:#fff; letter-spacing:-0.5px;
   }
@@ -65,7 +67,8 @@
     border-radius:var(--radius-sm); color:var(--text-secondary);
     cursor:pointer; transition:var(--transition); display:grid; place-items:center;
   }
-  .btn-icon:hover { border-color:var(--accent); color:var(--accent); background:var(--accent-light); }
+  .btn-icon:hover { border-color:var(--accent); color:var(--accent); background:var(--accent-light); transform:translateY(-2px); box-shadow:0 4px 12px var(--accent-glow); }
+  .btn-icon:active { transform:translateY(1px); box-shadow:none; }
   .btn-icon svg { width:18px; height:18px; }
 
   /* ── Layout ── */
@@ -83,8 +86,9 @@
     font-weight:500; cursor:pointer; transition:var(--transition);
     text-align:left; line-height:1.3;
   }
-  .sidebar-item:hover { background:var(--bg-hover); color:var(--text-primary); }
-  .sidebar-item.active { background:var(--accent); color:#fff; box-shadow:0 2px 8px var(--accent-glow); }
+  .sidebar-item:hover { background:var(--bg-hover); color:var(--text-primary); transform:translateY(-2px); }
+  .sidebar-item:active { transform:translateY(1px); }
+  .sidebar-item.active { background:var(--accent); color:#fff; box-shadow:0 2px 8px var(--accent-glow); animation:popIn 0.3s var(--spring); }
   .sidebar-num {
     width:22px; height:22px; border-radius:50%; font-size:10px; font-weight:700;
     display:grid; place-items:center; flex-shrink:0;
@@ -106,8 +110,9 @@
     border-radius:5px; color:var(--text-muted); font-size:13px;
     font-weight:600; cursor:pointer; transition:var(--transition);
   }
-  .tab:hover { color:var(--text-primary); }
-  .tab.active { background:var(--accent); color:#fff; box-shadow:0 2px 8px var(--accent-glow); }
+  .tab:hover { color:var(--text-primary); transform:translateY(-1px); }
+  .tab:active { transform:translateY(1px); }
+  .tab.active { background:var(--accent); color:#fff; box-shadow:0 2px 8px var(--accent-glow); animation:popIn 0.25s var(--spring); }
   .meta-box {
     margin:12px 24px 0; padding:14px 18px; background:var(--bg-body);
     border:1px solid var(--border); border-radius:var(--radius); flex-shrink:0;
@@ -164,7 +169,8 @@
     transition:var(--transition); flex-shrink:0;
     display:grid; place-items:center;
   }
-  .s-btn:hover:not(:disabled) { background:var(--accent-light); border-color:var(--accent-hover); color:var(--accent-hover); }
+  .s-btn:hover:not(:disabled) { background:var(--accent-light); border-color:var(--accent-hover); color:var(--accent-hover); transform:translateY(-2px); box-shadow:0 4px 12px var(--accent-glow); }
+  .s-btn:active:not(:disabled) { transform:translateY(1px); box-shadow:none; }
   .s-btn:disabled { opacity:0.4; cursor:not-allowed; }
   .s-btn svg { width:18px; height:18px; }
 
@@ -179,6 +185,26 @@
     animation:spin 0.8s linear infinite;
   }
   @keyframes spin { to { transform:rotate(360deg); } }
+  @keyframes popIn {
+    0% { opacity:0; transform:scale(0.8); }
+    60% { transform:scale(1.06); }
+    80% { transform:scale(0.97); }
+    100% { opacity:1; transform:scale(1); }
+  }
+  @keyframes pulse {
+    0% { transform:scale(1); }
+    50% { transform:scale(1.3); }
+    100% { transform:scale(1); }
+  }
+  @keyframes slideUp {
+    from { opacity:0; transform:translateY(10px); }
+    to { opacity:1; transform:translateY(0); }
+  }
+  .s-block { animation:slideUp 0.3s ease both; }
+  .s-block:nth-child(1) { animation-delay:0.05s; }
+  .s-block:nth-child(2) { animation-delay:0.1s; }
+  .s-result.show { animation:slideUp 0.3s ease both; }
+  .pulse-pop { animation:pulse 0.35s var(--spring); }
 
   .s-result { display:none; margin-top:8px; }
   .s-result.show { display:block; }
@@ -215,7 +241,7 @@
     border:1px solid var(--border); border-radius:var(--radius);
     padding:14px 16px; box-shadow:var(--shadow-lg); min-width:220px; max-width:280px;
   }
-  .tooltip.show { display:block; }
+  .tooltip.show { display:block; animation:popIn 0.35s var(--spring); }
   .tooltip-word { font-size:15px; font-weight:700; color:var(--accent); margin-bottom:4px; }
   .tooltip-meaning { font-size:13px; color:var(--text-secondary); margin-bottom:4px; line-height:1.5; }
   .tooltip-context { font-size:11px; color:var(--text-muted); margin-bottom:10px; line-height:1.5; font-style:italic; }
@@ -224,7 +250,8 @@
     border-radius:var(--radius-sm); color:#fff; font-size:12px;
     font-weight:600; cursor:pointer; transition:var(--transition);
   }
-  .tooltip-btn:hover { background:var(--accent-hover); }
+  .tooltip-btn:hover { background:var(--accent-hover); transform:translateY(-2px); box-shadow:0 4px 12px var(--accent-glow); }
+  .tooltip-btn:active { transform:translateY(1px); box-shadow:none; }
 
   /* ── Modal ── */
   .modal-overlay {
@@ -233,12 +260,17 @@
   }
   .modal-overlay.show { display:grid; }
   .modal {
-    background:var(--bg-white); border:1px solid var(--border); border-radius:14px;
+    background:var(--bg-white); border:1px solid var(--border); border-radius:20px;
     width:520px; max-width:92vw; max-height:80vh;
     display:flex; flex-direction:column; box-shadow:var(--shadow-lg);
     animation:modalIn 0.25s ease;
   }
-  @keyframes modalIn { from { opacity:0; transform:translateY(14px) scale(0.97); } }
+  @keyframes modalIn {
+    0% { opacity:0; transform:scale(0.85); }
+    50% { transform:scale(1.03); }
+    70% { transform:scale(0.98); }
+    100% { opacity:1; transform:scale(1); }
+  }
   .modal-header {
     display:flex; align-items:center; justify-content:space-between;
     padding:16px 20px; border-bottom:1px solid var(--border);
@@ -268,7 +300,8 @@
     border-radius:var(--radius-sm); color:var(--text-muted); font-size:11px;
     cursor:pointer; transition:var(--transition); flex-shrink:0; margin-top:2px;
   }
-  .vocab-del:hover { background:var(--danger); border-color:var(--danger); color:#fff; }
+  .vocab-del:hover { background:var(--danger); border-color:var(--danger); color:#fff; transform:translateY(-1px); }
+  .vocab-del:active { transform:translateY(1px); }
   .toast {
     position:fixed; bottom:24px; left:50%;
     transform:translateX(-50%) translateY(70px);
@@ -277,7 +310,17 @@
     box-shadow:var(--shadow-md); z-index:3000; opacity:0;
     transition:transform 0.35s ease, opacity 0.35s ease;
   }
-  .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+  .toast.show { opacity:1; transform:translateX(-50%) translateY(0); animation:popIn 0.4s var(--spring); }
+
+  /* ── Thumbnail ── */
+  .article-thumb {
+    margin:12px 24px 0; border-radius:var(--radius); overflow:hidden;
+    box-shadow:var(--shadow-sm); max-height:200px;
+  }
+  .article-thumb img {
+    width:100%; height:200px; object-fit:cover; display:block;
+    border-radius:var(--radius);
+  }
 </style>
 </head>
 <body>
@@ -312,6 +355,7 @@
           <button class="tab" data-tab="ko" onclick="switchTab('ko')">Korean</button>
         </div>
       </div>
+      <div class="article-thumb" id="articleThumb"></div>
       <div class="meta-box" id="metaBox"></div>
       <div class="article-content" id="articleContent"></div>
     </div>
@@ -376,6 +420,7 @@ const MOCK_ARTICLES = [
     id:1, title:"실리콘밸리의 재택근무 혁명",
     summary:"팬데믹 이후 실리콘밸리 기업들의 재택근무 정책 변화와 하이브리드 모델 정착 과정을 다룹니다.",
     difficulty:6, sourceName:"The Verge", sourceUrl:"https://www.theverge.com/2024/3/15/remote-work-silicon-valley-hybrid-revolution", date:"2025-03-15",
+    image_url:"https://loremflickr.com/800/400/remote+work+office",
     content:[
       {en:"The pandemic fundamentally reshaped how Silicon Valley thinks about office work.", ko:"팬데믹은 실리콘밸리가 사무실 근무를 바라보는 시각을 근본적으로 바꾸어 놓았습니다.",
         feedback_en_to_ko:{ideal:"팬데믹은 실리콘밸리가 사무실 근무에 대해 생각하는 방식을 근본적으로 바꿔 놓았습니다.", comments:["'thinks about'는 '~을 바라보는 시각'보다 '~에 대해 생각하는 방식'이 원문의 뉘앙스에 더 가깝습니다.","'reshaped'는 단순히 '바꾸다'보다 '재편하다, 새롭게 형성하다'라는 의미가 강합니다."]},
@@ -410,6 +455,7 @@ const MOCK_ARTICLES = [
     id:2, title:"뽀모도로 기법의 효과",
     summary:"25분 집중 + 5분 휴식 사이클의 뽀모도로 기법을 신경과학 관점에서 분석합니다.",
     difficulty:5, sourceName:"Harvard Business Review", sourceUrl:"https://hbr.org/2024/02/the-science-behind-the-pomodoro-technique", date:"2025-02-20",
+    image_url:"https://loremflickr.com/800/400/productivity+timer",
     content:[
       {en:"The Pomodoro Technique, developed by Francesco Cirillo in the late 1980s, is deceptively simple: work for 25 minutes, take a 5-minute break, and repeat.", ko:"1980년대 후반 프란체스코 시릴로가 개발한 뽀모도로 기법은 놀라울 정도로 단순합니다. 25분간 작업하고 5분 휴식을 취한 뒤 이를 반복합니다.",
         feedback_en_to_ko:{ideal:"1980년대 후반 프란체스코 시릴로가 개발한 뽀모도로 기법은 기만적일 만큼 단순합니다: 25분간 작업하고, 5분 휴식한 뒤, 반복합니다.", comments:["'deceptively simple'은 '놀라울 정도로 단순'보다 '겉보기에 단순해 보이지만 실은 효과적'이라는 뉘앙스입니다.","콜론(:) 뒤에 나열되는 구조를 한국어에서도 살리면 원문의 리듬이 전달됩니다."]},
@@ -440,7 +486,8 @@ const MOCK_ARTICLES = [
         feedback_ko_to_en:{ideal:"The key takeaway may not be the specific intervals, but the broader principle: structured breaks make you more productive, not less.", comments:["'핵심 교훈'은 'key takeaway'로 비즈니스/자기계발 맥락에서 자주 쓰입니다.","'not less'라는 간결한 마무리가 대비 효과를 극대화합니다."]}}
     ]
   },
-  {id:3, title:"커피와 업무 성과", summary:"카페인이 뇌에 작용하는 과학적 메커니즘과 최적의 커피 섭취 타이밍을 분석합니다.", difficulty:4, sourceName:"Wired", sourceUrl:"https://www.wired.com/story/2024/01/how-coffee-affects-your-brain-and-productivity/", date:"2025-01-10", content:[
+  {id:3, title:"커피와 업무 성과", summary:"카페인이 뇌에 작용하는 과학적 메커니즘과 최적의 커피 섭취 타이밍을 분석합니다.", difficulty:4, sourceName:"Wired", sourceUrl:"https://www.wired.com/story/2024/01/how-coffee-affects-your-brain-and-productivity/", date:"2025-01-10",
+    image_url:"https://loremflickr.com/800/400/coffee+work", content:[
     {en:"For millions of professionals, the workday doesn't truly begin until the first cup of coffee.", ko:"수백만 직장인에게 업무일은 첫 잔의 커피가 있기 전까지 진정으로 시작되지 않습니다.",
       feedback_en_to_ko:{ideal:"수백만 직장인에게 하루 업무는 첫 커피 한 잔 전까지는 진정으로 시작되지 않습니다.", comments:["'workday'는 '업무일'보다 '하루 업무'가 일상적 어감에 가깝습니다.","'첫 잔의 커피'보다 '첫 커피 한 잔'이 한국어 어순에 자연스럽습니다."]},
       feedback_ko_to_en:{ideal:"For millions of professionals, the workday doesn't truly begin until the first cup of coffee.", comments:["'~전까지 시작되지 않는다'는 'doesn't begin until~'로 정확히 대응됩니다.","'수백만 직장인'은 'millions of professionals'로, 'workers'보다 격식체입니다."]}},
@@ -514,6 +561,14 @@ function renderDifficulty(lv) {
 }
 function renderMeta() {
   const a = articles[currentDay];
+  const thumb = document.getElementById('articleThumb');
+  if (a.image_url) {
+    thumb.innerHTML = `<img src="${esc(a.image_url)}" alt="${esc(a.title)}" onerror="this.parentElement.style.display='none'">`;
+    thumb.style.display = '';
+  } else {
+    thumb.innerHTML = '';
+    thumb.style.display = 'none';
+  }
   document.getElementById('metaBox').innerHTML = `
     <div class="meta-title">${esc(a.title)}</div>
     <div class="meta-summary">${esc(a.summary)}</div>
@@ -616,6 +671,9 @@ function correctSentence(idx) {
     result.innerHTML = html;
     result.classList.add('show');
     btn.disabled = false;
+    btn.classList.remove('pulse-pop');
+    void btn.offsetWidth;
+    btn.classList.add('pulse-pop');
     saveResult(currentDay, currentTab, idx, html);
   }, 1600);
 }
@@ -656,7 +714,11 @@ async function addToVocab() {
   try {
     const { error } = await sb.from('vocabulary').insert({ word:selectedWord, meaning:selectedMeaning, context:selectedContext });
     if (error) { showToast('저장 실패: '+error.message); }
-    else { showToast(`"${selectedWord}" 단어장에 추가되었습니다.`); }
+    else {
+      showToast(`"${selectedWord}" 단어장에 추가되었습니다.`);
+      const tooltipBtn = document.querySelector('.tooltip-btn');
+      if (tooltipBtn) { tooltipBtn.classList.remove('pulse-pop'); void tooltipBtn.offsetWidth; tooltipBtn.classList.add('pulse-pop'); }
+    }
   } catch(e) {
     showToast('서버 연결 실패 — Supabase 프로젝트 상태를 확인해 주세요.');
     console.error('addToVocab network error:', e);
