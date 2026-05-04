@@ -117,7 +117,9 @@ Given an article title, link, and summary, produce a JSON object with this exact
 }
 
 CRITICAL RULES:
-- Extract EXACTLY 2 key sentences from the article. No more, no less. The content array must have exactly 2 objects.
+- Summarize the article into EXACTLY 2 paragraphs. Each paragraph must contain 3-4 sentences.
+- The content array must contain 6 to 8 sentence pair objects in total. No more, no less.
+- Each sentence pair is one sentence — do NOT merge multiple sentences into one object.
 - difficulty is 1-10 based on vocabulary/grammar complexity.
 - Each feedback has exactly 2 comments.
 - ideal translations should differ meaningfully from the literal ko/en to teach nuance.

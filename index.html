@@ -314,12 +314,11 @@
 
   /* ── Thumbnail ── */
   .article-thumb {
-    margin:12px 24px 0; border-radius:var(--radius); overflow:hidden;
-    box-shadow:var(--shadow-sm); max-height:200px;
+    margin:0 24px 24px; flex-shrink:0;
   }
   .article-thumb img {
-    width:100%; height:200px; object-fit:cover; display:block;
-    border-radius:var(--radius);
+    max-width:100%; height:auto; display:block;
+    border-radius:12px; box-shadow:var(--shadow-sm);
   }
 </style>
 </head>
@@ -355,7 +354,6 @@
           <button class="tab" data-tab="ko" onclick="switchTab('ko')">Korean</button>
         </div>
       </div>
-      <div class="article-thumb" id="articleThumb"></div>
       <div class="meta-box" id="metaBox"></div>
       <div class="article-content" id="articleContent"></div>
     </div>
@@ -486,14 +484,6 @@ function renderDifficulty(lv) {
 }
 function renderMeta() {
   const a = articles[currentDay];
-  const thumb = document.getElementById('articleThumb');
-  if (a.image_url) {
-    thumb.innerHTML = `<img src="${esc(a.image_url)}" alt="${esc(a.title)}" onerror="this.parentElement.style.display='none'">`;
-    thumb.style.display = '';
-  } else {
-    thumb.innerHTML = '';
-    thumb.style.display = 'none';
-  }
   document.getElementById('metaBox').innerHTML = `
     <div class="meta-title">${esc(a.title)}</div>
     <div class="meta-summary">${esc(a.summary)}</div>
@@ -518,7 +508,11 @@ function renderArticle() {
     buf.push(currentTab === 'en' ? p.en : p.ko);
     if ((i+1)%3===0 || i===pairs.length-1) { paras.push(buf.join(' ')); buf=[]; }
   });
-  document.getElementById('articleContent').innerHTML = paras.map(p=>`<p>${p}</p>`).join('');
+  let html = paras.map(p=>`<p>${p}</p>`).join('');
+  if (a.image_url) {
+    html += `<div class="article-thumb"><img src="${esc(a.image_url)}" alt="${esc(a.title)}" onerror="this.parentElement.style.display='none'"></div>`;
+  }
+  document.getElementById('articleContent').innerHTML = html;
 }
 function renderSentences() {
   const a = articles[currentDay];
@@ -718,7 +712,6 @@ async function init() {
     document.getElementById('metaBox').innerHTML = '<div style="text-align:center;padding:24px;color:var(--text-muted);font-size:13px">오늘의 아티클이 아직 준비되지 않았습니다.<br>매일 오전 7시에 새로운 기사가 업데이트됩니다.</div>';
     document.getElementById('articleContent').innerHTML = '';
     document.getElementById('sentenceList').innerHTML = '';
-    document.getElementById('articleThumb').style.display = 'none';
     return;
   }
   renderSidebar(); renderArticle(); renderMeta(); renderSentences();
