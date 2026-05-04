@@ -182,49 +182,62 @@ def run():
     new_entries = filter_new_entries(entries)
     print(f"[FILTER] 신규 기사 {len(new_entries)}개")
 
-    targets = new_entries[:MAX_ARTICLES]
+    targets = new_entries[:MAX_ARTICLES * 2]
     if not targets:
         print("[SKIP] 처리할 새로운 기사가 없습니다.")
         return
 
-    print(f"[PLAN] {len(targets)}개 기사 처리 예정")
+    print(f"[PLAN] 최대 {len(targets)}개 중 {MAX_ARTICLES}개 성공 목표")
 
-    try:
-        sb.table("articles").delete().gte("id", 0).execute()
-        print("[DB] 기존 articles 전체 삭제 완료 (덮어쓰기 준비)\n")
-    except Exception as e:
-        print(f"[ERROR/DB] 기존 데이터 삭제 실패: {e}\n")
-
-    success = 0
-    fail = 0
+    # LLM 처리: 성공한 기사만 모아서 정확히 3개까지만
+    ready = []
 
     for i, entry in enumerate(targets):
+        if len(ready) >= MAX_ARTICLES:
+            break
+
         print(f"[{i+1}/{len(targets)}] 처리 중: {entry['title']}")
 
         try:
             data = generate_article_data(entry)
             print(f"  [LLM] 변환 완료 — 문장 {len(data.get('content',[]))}개")
+            ready.append((entry, data))
         except Exception as e:
             print(f"  [ERROR/LLM] {e}")
-            fail += 1
             if i < len(targets) - 1:
                 print(f"  [WAIT] {API_COOLDOWN}초 대기 후 다음 기사로...")
                 time.sleep(API_COOLDOWN)
             continue
 
+        if len(ready) < MAX_ARTICLES and i < len(targets) - 1:
+            print(f"  [WAIT] {API_COOLDOWN}초 대기...")
+            time.sleep(API_COOLDOWN)
+
+    if not ready:
+        print("[SKIP] LLM 처리에 성공한 기사가 없습니다.")
+        return
+
+    print(f"\n[READY] 성공 {len(ready)}개 — DB 초기화 후 Insert 시작")
+
+    # 기존 데이터 전체 삭제
+    try:
+        sb.table("articles").delete().neq("id", 0).execute()
+        print("[DB] 기존 articles 전체 삭제 완료")
+    except Exception as e:
+        print(f"[ERROR/DB] 기존 데이터 삭제 실패: {e}")
+        return
+
+    # 성공한 기사만 Insert
+    success = 0
+    for entry, data in ready:
         try:
             save_to_supabase(entry, data)
             print(f"  [DB] 저장 완료: {data['title_ko']}")
             success += 1
         except Exception as e:
             print(f"  [ERROR/DB] {e}")
-            fail += 1
 
-        if i < len(targets) - 1:
-            print(f"  [WAIT] {API_COOLDOWN}초 대기...")
-            time.sleep(API_COOLDOWN)
-
-    print(f"\n[IEL Pipeline] 완료 — 성공 {success}개 / 실패 {fail}개")
+    print(f"\n[IEL Pipeline] 완료 — {success}개 저장")
 
 
 if __name__ == "__main__":
