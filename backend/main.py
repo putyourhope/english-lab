@@ -15,7 +15,7 @@ from supabase import create_client
 
 # ── 환경변수 ──
 SUPABASE_URL = os.environ["SUPABASE_URL"]
-SUPABASE_KEY = os.environ["SUPABASE_KEY"]  # service_role key (서버 전용)
+SUPABASE_KEY = os.environ["SUPABASE_SERVICE_KEY"]  # service_role key (서버 전용)
 OPENAI_API_KEY = os.environ["OPENAI_API_KEY"]
 
 sb = create_client(SUPABASE_URL, SUPABASE_KEY)
@@ -29,7 +29,7 @@ RSS_FEEDS = [
     "https://www.wired.com/feed/rss",
 ]
 
-MAX_ARTICLES = 5
+MAX_ARTICLES = 3
 API_COOLDOWN = 20  # 초
 
 
@@ -87,8 +87,8 @@ Given an article title, link, and summary, produce a JSON object with this exact
   ]
 }
 
-Rules:
-- Extract 7-10 key sentences from the article content.
+CRITICAL RULES:
+- Extract EXACTLY 2 key sentences from the article. No more, no less. The content array must have exactly 2 objects.
 - difficulty is 1-10 based on vocabulary/grammar complexity.
 - Each feedback has exactly 2 comments.
 - ideal translations should differ meaningfully from the literal ko/en to teach nuance.
@@ -147,7 +147,13 @@ def run():
         print("[SKIP] 처리할 새로운 기사가 없습니다.")
         return
 
-    print(f"[PLAN] {len(targets)}개 기사 처리 예정\n")
+    print(f"[PLAN] {len(targets)}개 기사 처리 예정")
+
+    try:
+        sb.table("articles").delete().gte("id", 0).execute()
+        print("[DB] 기존 articles 전체 삭제 완료 (덮어쓰기 준비)\n")
+    except Exception as e:
+        print(f"[ERROR/DB] 기존 데이터 삭제 실패: {e}\n")
 
     success = 0
     fail = 0

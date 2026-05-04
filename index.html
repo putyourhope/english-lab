@@ -159,12 +159,12 @@
   .s-input:focus { outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-glow); }
   .s-input::placeholder { color:var(--text-muted); }
   .s-btn {
-    width:40px; height:40px; background:var(--accent); border:none;
-    border-radius:var(--radius-sm); color:#fff; cursor:pointer;
+    width:40px; height:40px; background:transparent; border:1.5px solid var(--accent);
+    border-radius:var(--radius-sm); color:var(--accent); cursor:pointer;
     transition:var(--transition); flex-shrink:0;
     display:grid; place-items:center;
   }
-  .s-btn:hover:not(:disabled) { background:var(--accent-hover); }
+  .s-btn:hover:not(:disabled) { background:var(--accent-light); border-color:var(--accent-hover); color:var(--accent-hover); }
   .s-btn:disabled { opacity:0.4; cursor:not-allowed; }
   .s-btn svg { width:18px; height:18px; }
 
@@ -441,94 +441,18 @@ const MOCK_ARTICLES = [
     ]
   },
   {id:3, title:"커피와 업무 성과", summary:"카페인이 뇌에 작용하는 과학적 메커니즘과 최적의 커피 섭취 타이밍을 분석합니다.", difficulty:4, sourceName:"Wired", sourceUrl:"https://www.wired.com/story/2024/01/how-coffee-affects-your-brain-and-productivity/", date:"2025-01-10", content:[
-    {en:"For millions of professionals, the workday doesn't truly begin until the first cup of coffee.", ko:"수백만 직장인에게 업무일은 첫 잔의 커피가 있기 전까지 진정으로 시작되지 않습니다."},
-    {en:"Caffeine is the world's most widely consumed psychoactive substance, and for good reason — it blocks adenosine receptors in the brain, temporarily warding off drowsiness and enhancing alertness.", ko:"카페인은 세계에서 가장 널리 소비되는 향정신성 물질이며, 그럴만한 이유가 있습니다. 뇌의 아데노신 수용체를 차단하여 일시적으로 졸음을 막고 각성 상태를 높여줍니다."},
-    {en:"Research shows that moderate consumption can improve reaction time, logical reasoning, and short-term memory.", ko:"연구에 따르면 적정량의 섭취는 반응 시간, 논리적 추론, 단기 기억력을 향상시킬 수 있습니다."},
-    {en:"However, timing matters more than most people realize.", ko:"하지만 대부분의 사람들이 인식하는 것보다 타이밍이 중요합니다."},
-    {en:"Cortisol, the body's natural alertness hormone, peaks between 8 and 9 AM.", ko:"신체의 자연적 각성 호르몬인 코르티솔은 오전 8시에서 9시 사이에 최고치에 달합니다."},
-    {en:"Sleep scientists recommend waiting until mid-morning — around 9:30 to 11:30 AM — for your first cup to get the maximum cognitive benefit.", ko:"수면 과학자들은 최대 인지 효과를 얻으려면 오전 9시 30분에서 11시 30분 사이, 즉 오전 중반까지 기다릴 것을 권장합니다."},
-    {en:"The afternoon coffee habit carries hidden costs.", ko:"오후 커피 습관에는 숨겨진 대가가 있습니다."},
-    {en:"Caffeine has a half-life of roughly 5 to 6 hours, meaning a 3 PM espresso still has half its caffeine active at 8 or 9 PM.", ko:"카페인의 반감기는 약 5~6시간으로, 오후 3시의 에스프레소는 밤 8~9시에도 카페인의 절반이 여전히 활성 상태입니다."},
-    {en:"Breaking this cycle may be the single most effective productivity hack available.", ko:"이 악순환을 끊는 것이야말로 가장 효과적인 생산성 해킹일 수 있습니다."}
-  ]},
-  {id:4, title:"주 4일 근무제의 부상", summary:"아이슬란드와 마이크로소프트 일본의 주 4일 근무제 실험 결과를 소개합니다.", difficulty:6, sourceName:"BBC Worklife", sourceUrl:"https://www.bbc.com/worklife/article/20240402-four-day-work-week-global-trials", date:"2025-04-02", content:[
-    {en:"Iceland's landmark trial of the four-day work week between 2015 and 2019 involved over 2,500 workers.", ko:"아이슬란드는 2015년부터 2019년까지 2,500명 이상의 근로자가 참여한 획기적인 주 4일 근무제 실험을 진행했습니다."},
-    {en:"The results were striking: productivity remained the same or improved in the majority of workplaces, while employee well-being increased dramatically.", ko:"결과는 놀라웠습니다. 대부분의 직장에서 생산성이 동일하거나 향상되었으며, 직원 복지는 극적으로 증가했습니다."},
-    {en:"Since then, similar pilots have launched in the UK, Japan, Spain, and several US companies.", ko:"이후 영국, 일본, 스페인 및 여러 미국 기업에서 유사한 시범 사업이 시작되었습니다."},
-    {en:"Microsoft Japan's experiment in 2019 saw a staggering 40 percent boost in productivity after switching to a four-day week.", ko:"마이크로소프트 일본 지사의 2019년 실험에서는 주 4일제로 전환한 후 생산성이 무려 40%나 향상되었습니다."},
-    {en:"Meetings were shortened from 60 to 30 minutes, and employees reported feeling more focused and energized.", ko:"회의 시간은 60분에서 30분으로 단축되었고, 직원들은 더 집중하고 활력이 넘친다고 보고했습니다."},
-    {en:"The compressed schedule forced teams to prioritize ruthlessly, eliminating unnecessary tasks and streamlining communication.", ko:"압축된 일정은 팀들이 불필요한 업무를 제거하고 소통을 간소화하며 냉정하게 우선순위를 정하도록 만들었습니다."},
-    {en:"Skeptics raise valid concerns about industries that require continuous coverage — healthcare, customer service, and manufacturing among them.", ko:"회의론자들은 의료, 고객 서비스, 제조업 등 지속적인 인력 배치가 필요한 산업에 대해 타당한 우려를 제기합니다."},
-    {en:"The most successful implementations have used staggered schedules rather than giving everyone the same day off.", ko:"가장 성공적인 도입 사례에서는 모두에게 같은 날 쉬게 하지 않고 교대 일정을 사용했습니다."},
-    {en:"The debate is no longer whether shorter work weeks can work, but how to implement them without sacrificing service quality.", ko:"이제 논쟁은 짧은 근무 주가 효과가 있는지 여부가 아니라, 서비스 품질을 희생하지 않고 어떻게 시행할 것인가에 대한 것입니다."}
-  ]},
-  {id:5, title:"디지털 디톡스와 집중력", summary:"하루 96회 휴대폰 확인, 23분의 컨텍스트 전환 비용 등 디지털 방해 요소의 실체를 데이터로 보여줍니다.", difficulty:5, sourceName:"Fast Company", sourceUrl:"https://www.fastcompany.com/91024578/digital-detox-reclaiming-focus-notification-world", date:"2025-03-28", content:[
-    {en:"The average professional checks their phone 96 times a day and receives over 60 push notifications.", ko:"평균적인 직장인은 하루에 96번 휴대폰을 확인하고 60개 이상의 푸시 알림을 받습니다."},
-    {en:"Each interruption, no matter how brief, triggers a context switch that takes an average of 23 minutes to fully recover from.", ko:"아무리 짧은 방해라도 각 중단은 완전히 회복하는 데 평균 23분이 걸리는 컨텍스트 전환을 유발합니다."},
-    {en:"Over the course of a workday, these micro-distractions can consume nearly a third of productive time without us even realizing it.", ko:"하루 업무 시간 동안 이러한 미세한 방해 요소는 우리가 인식하지도 못한 채 생산적 시간의 거의 3분의 1을 소모할 수 있습니다."},
-    {en:"The digital detox movement isn't about abandoning technology entirely.", ko:"디지털 디톡스 운동은 기술을 완전히 포기하는 것이 아닙니다."},
-    {en:"Instead, it advocates for intentional boundaries — turning off non-essential notifications, batching email checks to specific times, and designating phone-free zones during deep work sessions.", ko:"대신 의도적인 경계를 주장합니다. 필수적이지 않은 알림을 끄고, 이메일 확인을 특정 시간대에 묶어서 하며, 심층 작업 시간 동안 휴대폰 금지 구역을 지정하는 것입니다."},
-    {en:"Companies like Basecamp have adopted 'library rules' for their offices, where the default expectation is quiet, focused work.", ko:"베이스캠프 같은 기업은 사무실에 '도서관 규칙'을 도입하여 기본 기대치를 조용하고 집중된 작업으로 설정했습니다."},
-    {en:"Practical strategies that have gained traction include the 'two-device rule' — using a laptop for work and keeping the phone in another room.", ko:"주목받는 실용적 전략으로는 노트북은 업무용으로 사용하고 휴대폰은 다른 방에 두는 '두 기기 규칙'이 있습니다."},
-    {en:"The goal isn't to be unreachable, but to shift from reactive mode to proactive mode, choosing when to engage rather than being pulled in by every ping.", ko:"목표는 연락이 안 되는 것이 아니라, 반응적 모드에서 주도적 모드로 전환하여 모든 알림에 끌려다니지 않고 언제 참여할지 스스로 선택하는 것입니다."}
-  ]},
-  {id:6, title:"걷는 회의의 창의력 효과", summary:"스탠퍼드 연구 기반으로 걷기가 창의적 사고를 60% 높이는 메커니즘을 설명합니다.", difficulty:4, sourceName:"Inc. Magazine", sourceUrl:"https://www.inc.com/articles/2024/02/why-walking-meetings-boost-creativity-by-60-percent.html", date:"2025-02-05", content:[
-    {en:"Steve Jobs was famous for his walking meetings, and it turns out he was onto something backed by science.", ko:"스티브 잡스는 걸으며 하는 회의로 유명했는데, 이것이 과학적 근거가 있는 것으로 밝혀졌습니다."},
-    {en:"A Stanford study found that walking boosts creative output by an average of 60 percent compared to sitting.", ko:"스탠퍼드의 연구에 따르면 걷기는 앉아 있을 때에 비해 창의적 결과물을 평균 60% 증가시킵니다."},
-    {en:"The effect persists even after sitting back down — participants who had just walked generated significantly more novel ideas in subsequent brainstorming sessions.", ko:"이 효과는 다시 앉은 후에도 지속됩니다. 방금 걸었던 참가자들은 이어지는 브레인스토밍 세션에서 훨씬 더 많은 참신한 아이디어를 생성했습니다."},
-    {en:"Walking meetings naturally limit attendance to two or three people, which eliminates the 'too many cooks' problem plaguing conference rooms.", ko:"걷는 회의는 자연스럽게 참석자를 두세 명으로 제한하여 회의실을 괴롭히는 '사공이 너무 많은' 문제를 해결합니다."},
-    {en:"They also tend to be shorter and more focused, since there are no slides to hide behind and no laptops to distract.", ko:"또한 뒤에 숨을 슬라이드도, 집중을 방해할 노트북도 없기 때문에 회의가 더 짧고 집중적인 경향이 있습니다."},
-    {en:"The physical movement reduces the social hierarchy that formal meeting rooms reinforce.", ko:"신체적 움직임은 공식적인 회의실이 강화하는 사회적 위계를 줄여줍니다."},
-    {en:"Companies like LinkedIn and Twitter have built walking paths around their campuses specifically for this purpose.", ko:"링크드인과 트위터 같은 기업들은 이 목적을 위해 캠퍼스 주변에 산책로를 만들었습니다."},
-    {en:"The key is matching the meeting type to the format — walking meetings excel for one-on-ones, brainstorming, and feedback conversations.", ko:"핵심은 회의 유형을 형식에 맞추는 것입니다. 걷는 회의는 1:1 면담, 브레인스토밍, 피드백 대화에 탁월합니다."}
-  ]},
-  {id:7, title:"인박스 제로의 심리학", summary:"하루 121통 이메일이 만드는 만성 불안과 자이가르닉 효과를 심리학적으로 분석합니다.", difficulty:7, sourceName:"The Atlantic", sourceUrl:"https://www.theatlantic.com/technology/archive/2024/01/inbox-zero-psychology-email-anxiety/678234/", date:"2025-01-25", content:[
-    {en:"The average office worker receives 121 emails per day.", ko:"평균적인 사무직 근로자는 하루에 121통의 이메일을 받습니다."},
-    {en:"For many, the inbox becomes a source of chronic low-grade anxiety — a never-ending to-do list that follows you everywhere.", ko:"많은 사람에게 받은편지함은 만성적인 경미한 불안의 원천이 됩니다. 어디든 따라오는 끝나지 않는 할 일 목록인 셈입니다."},
-    {en:"The 'Inbox Zero' methodology proposes a radical idea: your inbox should be empty at the end of each processing session.", ko:"'인박스 제로' 방법론은 급진적인 아이디어를 제안합니다. 각 처리 세션이 끝나면 받은편지함이 비어야 한다는 것입니다."},
-    {en:"The system rests on five possible actions for each message: delete, delegate, respond, defer, or do.", ko:"이 시스템은 각 메시지에 대한 다섯 가지 가능한 행동에 기반합니다: 삭제, 위임, 응답, 보류, 또는 실행."},
-    {en:"The critical insight is that leaving emails unprocessed is itself a decision — one that creates mental overhead.", ko:"핵심 통찰은 이메일을 처리하지 않은 채 두는 것 자체가 하나의 결정이며, 정신적 부담을 만든다는 것입니다."},
-    {en:"Each unread message represents an open loop in your brain, consuming cognitive resources even when you're not actively thinking about it.", ko:"처리하지 않은 각 메시지는 뇌에서 열린 루프를 나타내며, 적극적으로 생각하고 있지 않을 때에도 인지적 자원을 소모합니다."},
-    {en:"Psychologists call this the Zeigarnik effect.", ko:"심리학자들은 이를 자이가르닉 효과라고 부릅니다."},
-    {en:"Research from the University of British Columbia found that limiting email checks to three times per day significantly reduced stress.", ko:"브리티시 컬럼비아 대학의 연구에 따르면 이메일 확인을 하루 세 번으로 제한하면 스트레스가 크게 감소했습니다."},
-    {en:"The real lesson: the inbox is a communication tool, not a task manager, and treating it as one is where the trouble begins.", ko:"진정한 교훈: 받은편지함은 커뮤니케이션 도구이지 작업 관리자가 아니며, 작업 관리자로 취급하는 것이 문제의 시작입니다."}
-  ]},
-  {id:8, title:"스탠딩 데스크의 진실", summary:"120억 달러 시장 규모의 스탠딩 데스크가 과대 광고인지 검증합니다.", difficulty:5, sourceName:"TechCrunch", sourceUrl:"https://techcrunch.com/2024/12/18/standing-desks-health-hype-or-revolution-ergonomics-study/", date:"2024-12-18", content:[
-    {en:"Standing desks have become a ubiquitous fixture in modern offices, fueled by alarming headlines comparing prolonged sitting to smoking.", ko:"스탠딩 데스크는 장시간 앉아 있는 것을 흡연에 비유하는 충격적인 헤드라인에 힘입어 현대 사무실의 보편적인 비품이 되었습니다."},
-    {en:"The global standing desk market is projected to reach 12 billion dollars by 2028.", ko:"전 세계 스탠딩 데스크 시장은 2028년까지 120억 달러에 달할 것으로 전망됩니다."},
-    {en:"But do they actually deliver on their health promises, or have we fallen for the most expensive placebo in office furniture history?", ko:"하지만 실제로 건강에 대한 약속을 이행하는 것일까요, 아니면 사무용 가구 역사상 가장 비싼 플라시보에 속은 것일까요?"},
-    {en:"A study published in the British Medical Journal found that standing desk users had lower levels of fatigue, anxiety, and sedentary time.", ko:"영국의학저널에 게재된 연구에 따르면 스탠딩 데스크 사용자는 피로감, 불안감, 앉아 있는 시간이 더 적었습니다."},
-    {en:"However, simply standing all day comes with its own problems — increased risk of varicose veins, foot pain, and back discomfort.", ko:"그러나 단순히 하루 종일 서 있는 것도 하지정맥류 위험 증가, 발 통증, 허리 불편감 등 자체적인 문제가 있습니다."},
-    {en:"The consensus among ergonomics researchers is that the magic lies in alternating between sitting and standing throughout the day.", ko:"인체공학 연구자들 사이의 합의는 마법이 하루 종일 앉기와 서기를 번갈아 하는 데 있다는 것입니다."},
-    {en:"The best desk setup may be a sit-stand desk paired with a timer reminding you to switch positions every 30 to 45 minutes.", ko:"최적의 데스크 설정은 좌식-입식 겸용 데스크에 30~45분마다 자세를 바꾸라고 알려주는 타이머를 함께 사용하는 것입니다."},
-    {en:"But the simplest and most effective intervention remains the oldest: just get up and walk around regularly.", ko:"하지만 가장 간단하고 효과적인 해결책은 가장 오래된 것입니다. 정기적으로 일어나서 걸어 다니는 것입니다."}
-  ]},
-  {id:9, title:"사이드 프로젝트의 힘", summary:"Gmail, 슬랙 등 사이드 프로젝트에서 탄생한 서비스 사례와 구글의 20% 정책을 소개합니다.", difficulty:4, sourceName:"MIT Technology Review", sourceUrl:"https://www.technologyreview.com/2025/04/10/side-projects-secret-weapon-top-performers/", date:"2025-04-10", content:[
-    {en:"Gmail started as a side project. So did Slack, Twitter, and Craigslist.", ko:"Gmail은 사이드 프로젝트로 시작되었습니다. 슬랙, 트위터, 크레이그스리스트도 마찬가지입니다."},
-    {en:"Google famously allowed its engineers to spend 20 percent of their time on personal projects, a policy that produced some of the company's most successful products.", ko:"구글은 엔지니어들이 시간의 20%를 개인 프로젝트에 쓸 수 있도록 허용한 것으로 유명하며, 이 정책은 회사의 가장 성공적인 제품 일부를 탄생시켰습니다."},
-    {en:"While few companies still formally offer this perk, the principle behind it remains powerful: unstructured creative time fuels innovation.", ko:"이 혜택을 공식적으로 제공하는 기업은 거의 없지만, 그 이면의 원칙은 여전히 강력합니다. 비구조화된 창작 시간이 혁신을 촉진한다는 것입니다."},
-    {en:"Side projects serve as a low-pressure sandbox where professionals can experiment with new technologies and maintain curiosity.", ko:"사이드 프로젝트는 전문가들이 새로운 기술을 실험하고 호기심을 유지할 수 있는 저압력 실험장 역할을 합니다."},
-    {en:"A survey by Stack Overflow found that 80 percent of developers work on side projects, and those who do report higher job satisfaction.", ko:"Stack Overflow의 조사에 따르면 개발자의 80%가 사이드 프로젝트를 하고 있으며, 그렇게 하는 사람들은 더 높은 직업 만족도를 보고합니다."},
-    {en:"Burnout is a real risk when evening hours become a second shift.", ko:"저녁 시간이 두 번째 근무 시간이 되면 번아웃은 현실적인 위험입니다."},
-    {en:"Experts recommend limiting side project work to a few focused hours per week and choosing projects that energize rather than drain.", ko:"전문가들은 사이드 프로젝트 작업을 주당 몇 시간의 집중 시간으로 제한하고 소진시키기보다 활력을 주는 프로젝트를 선택할 것을 권장합니다."},
-    {en:"The most valuable side projects aren't the ones that become startups — they're the ones that keep you learning.", ko:"가장 가치 있는 사이드 프로젝트는 스타트업이 되는 것이 아니라, 계속 배우게 하는 것입니다."}
-  ]},
-  {id:10, title:"파워 낮잠의 과학", summary:"NASA의 26분 낮잠 실험 결과와 구글·삼성의 수면 캡슐 도입 사례를 소개합니다.", difficulty:3, sourceName:"Forbes", sourceUrl:"https://www.forbes.com/sites/leadership/2025/03/05/the-science-of-power-naps-at-work/", date:"2025-03-05", content:[
-    {en:"NASA discovered that a 26-minute nap improved pilot performance by 34 percent and alertness by 54 percent.", ko:"NASA는 26분의 낮잠이 조종사의 성과를 34%, 주의력을 54% 향상시킨다는 것을 발견했습니다."},
-    {en:"Companies like Google, Nike, and Samsung have installed dedicated nap pods in their offices.", ko:"구글, 나이키, 삼성 같은 기업들은 사무실에 전용 수면 캡슐을 설치했습니다."},
-    {en:"The science is unambiguous: short naps make you better at your job.", ko:"과학은 명확합니다. 짧은 낮잠은 업무 능력을 향상시킵니다."},
-    {en:"The ideal nap length is between 10 and 20 minutes.", ko:"이상적인 낮잠 길이는 10분에서 20분 사이입니다."},
-    {en:"This keeps you in the lighter stages of sleep, making it easy to wake up refreshed rather than groggy.", ko:"이렇게 하면 가벼운 수면 단계에 머물러 멍한 상태가 아닌 상쾌한 상태로 깨어날 수 있습니다."},
-    {en:"Naps longer than 30 minutes risk entering deep sleep, which can cause sleep inertia — that disoriented, foggy feeling.", ko:"30분 이상의 낮잠은 깊은 수면에 진입할 위험이 있어, 방향 감각 상실과 안개 낀 듯한 느낌인 수면 관성을 유발할 수 있습니다."},
-    {en:"Timing also matters: the post-lunch dip between 1 and 3 PM is the biological sweet spot.", ko:"타이밍도 중요합니다. 점심 후 오후 1시에서 3시 사이의 졸음이 생물학적 최적 시간대입니다."},
-    {en:"Despite the evidence, workplace napping still carries stigma in many cultures.", ko:"증거에도 불구하고 직장에서의 낮잠은 많은 문화에서 여전히 편견을 안고 있습니다."},
-    {en:"Forward-thinking companies are reframing naps as a performance tool rather than a sign of weakness.", ko:"선진적인 기업들은 낮잠을 나약함의 표시가 아닌 성과 도구로 재정의하고 있습니다."}
+    {en:"For millions of professionals, the workday doesn't truly begin until the first cup of coffee.", ko:"수백만 직장인에게 업무일은 첫 잔의 커피가 있기 전까지 진정으로 시작되지 않습니다.",
+      feedback_en_to_ko:{ideal:"수백만 직장인에게 하루 업무는 첫 커피 한 잔 전까지는 진정으로 시작되지 않습니다.", comments:["'workday'는 '업무일'보다 '하루 업무'가 일상적 어감에 가깝습니다.","'첫 잔의 커피'보다 '첫 커피 한 잔'이 한국어 어순에 자연스럽습니다."]},
+      feedback_ko_to_en:{ideal:"For millions of professionals, the workday doesn't truly begin until the first cup of coffee.", comments:["'~전까지 시작되지 않는다'는 'doesn't begin until~'로 정확히 대응됩니다.","'수백만 직장인'은 'millions of professionals'로, 'workers'보다 격식체입니다."]}},
+    {en:"Caffeine has a half-life of roughly 5 to 6 hours, meaning a 3 PM espresso still has half its caffeine active at 8 or 9 PM.", ko:"카페인의 반감기는 약 5~6시간으로, 오후 3시의 에스프레소는 밤 8~9시에도 카페인의 절반이 여전히 활성 상태입니다.",
+      feedback_en_to_ko:{ideal:"카페인의 반감기는 약 5~6시간이므로, 오후 3시에 마신 에스프레소의 카페인 절반이 밤 8~9시에도 여전히 활성 상태로 남아 있습니다.", comments:["'meaning'은 인과 관계를 나타내므로 '~이므로'가 자연스럽습니다.","'오후 3시의 에스프레소'보다 '오후 3시에 마신 에스프레소'가 행위를 명확히 합니다."]},
+      feedback_ko_to_en:{ideal:"Caffeine has a half-life of roughly 5 to 6 hours, meaning a 3 PM espresso still has half its caffeine active at 8 or 9 PM.", comments:["'meaning'을 사용한 분사구문으로 인과 관계를 자연스럽게 연결합니다.","'활성 상태'는 'active'로 간결하게 표현합니다."]}}
   ]}
 ];
 
 // ── Dynamic Fetch ──
 // TODO: 실제 API 연동 시 아래 setTimeout 블록을 교체하세요.
-// 예시: const { data } = await sb.from('articles').select('*').order('date',{ascending:false}).limit(10);
+// 예시: const { data } = await sb.from('articles').select('*').order('date',{ascending:false}).limit(3);
 // return data.map(row => ({ ...row, content: JSON.parse(row.content) }));
 async function fetchArticles() {
   return new Promise(resolve => {
@@ -620,7 +544,6 @@ function renderSentences() {
   const a = articles[currentDay];
   const list = document.getElementById('sentenceList');
   const srcKey = currentTab === 'en' ? 'en' : 'ko';
-  const ph = currentTab === 'en' ? '한국어로 번역해 보세요...' : '영어로 영작해 보세요...';
   const d = currentDay, t = currentTab;
 
   list.innerHTML = a.content.map((pair, i) => {
@@ -630,7 +553,7 @@ function renderSentences() {
     <div class="s-block" id="sb-${i}">
       <div class="s-source"><span class="s-num">${i+1}</span>${esc(pair[srcKey])}</div>
       <div class="s-input-row">
-        <textarea class="s-input" id="si-${i}" rows="1" placeholder="${ph}"
+        <textarea class="s-input" id="si-${i}" rows="1"
           oninput="autoResize(this);onInput(${i},this.value)">${esc(savedVal)}</textarea>
         <button class="s-btn" id="sbtn-${i}" onclick="correctSentence(${i})" title="AI 교정">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5z"/><path d="M19 2l.5 1.5L21 4l-1.5.5L19 6l-.5-1.5L17 4l1.5-.5z"/><path d="M5 18l.5 1.5L7 20l-1.5.5L5 22l-.5-1.5L3 20l1.5-.5z"/></svg>
