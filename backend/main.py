@@ -10,6 +10,7 @@ import re
 import json
 import time
 import feedparser
+import requests
 from datetime import datetime, timezone
 from openai import OpenAI
 from supabase import create_client
@@ -175,10 +176,39 @@ Please create the IEL learning content JSON for this article."""
     return json.loads(resp.choices[0].message.content)
 
 
+def fetch_og_image(url):
+    """기사 페이지에서 og:image 메타태그 추출"""
+    try:
+        resp = requests.get(url, timeout=10, headers={
+            "User-Agent": "Mozilla/5.0 (compatible; IELBot/1.0)"
+        })
+        resp.raise_for_status()
+        match = re.search(
+            r'<meta[^>]+property=["\']og:image["\'][^>]+content=["\']([^"\']+)["\']',
+            resp.text
+        )
+        if not match:
+            match = re.search(
+                r'<meta[^>]+content=["\']([^"\']+)["\'][^>]+property=["\']og:image["\']',
+                resp.text
+            )
+        if match:
+            img_url = match.group(1)
+            if img_url.startswith("http"):
+                print(f"  [OG] og:image 발견: {img_url[:80]}")
+                return img_url
+    except Exception as e:
+        print(f"  [OG] 페이지 접근 실패: {e}")
+    return None
+
+
 def resolve_image_url(entry, data):
-    """RSS 이미지가 있으면 사용, 없으면 null (부적합 랜덤 이미지 제거)"""
+    """RSS 이미지 → og:image fallback → null"""
     if entry.get("image_url"):
         return entry["image_url"]
+    og = fetch_og_image(entry.get("link", ""))
+    if og:
+        return og
     return None
 
 
