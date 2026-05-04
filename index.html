@@ -242,9 +242,9 @@
     padding:14px 16px; box-shadow:var(--shadow-lg); min-width:220px; max-width:280px;
   }
   .tooltip.show { display:block; animation:popIn 0.35s var(--spring); }
-  .tooltip-word { font-size:15px; font-weight:700; color:var(--accent); margin-bottom:4px; }
-  .tooltip-meaning { font-size:13px; color:var(--text-secondary); margin-bottom:4px; line-height:1.5; }
-  .tooltip-context { font-size:11px; color:var(--text-muted); margin-bottom:10px; line-height:1.5; font-style:italic; }
+  .tooltip-word { font-size:16px; font-weight:700; color:var(--accent); margin-bottom:6px; }
+  .tooltip-meaning { font-size:14px; color:var(--text-primary); margin-bottom:12px; line-height:1.5; font-weight:600; }
+  .tooltip-nomatch { font-size:12px; color:var(--text-muted); margin-bottom:12px; }
   .tooltip-btn {
     width:100%; padding:7px 12px; background:var(--accent); border:none;
     border-radius:var(--radius-sm); color:#fff; font-size:12px;
@@ -367,7 +367,6 @@
 <div class="tooltip" id="tooltip">
   <div class="tooltip-word" id="tooltipWord"></div>
   <div class="tooltip-meaning" id="tooltipMeaning"></div>
-  <div class="tooltip-context" id="tooltipContext"></div>
   <button class="tooltip-btn" onclick="addToVocab()">+ 단어장에 추가</button>
 </div>
 
@@ -430,52 +429,41 @@ async function fetchArticles() {
   }));
 }
 
-// ── Dictionary ──
-const enToKo = {
-  "remote":"원격의","hybrid":"하이브리드","productivity":"생산성","flexibility":"유연성",
-  "commute":"통근","collaboration":"협업","breakthrough":"돌파구","vacancy":"공실",
-  "revolution":"혁명","technique":"기법","neuroscience":"신경과학","sustained":"지속적인",
-  "flow":"몰입","interval":"간격","caffeine":"카페인","adenosine":"아데노신",
-  "cortisol":"코르티솔","cognitive":"인지적인","half-life":"반감기","disrupts":"방해하다",
-  "pilot":"시범 사업","staggered":"시차를 둔","compressed":"압축된","well-being":"복지",
-  "prioritize":"우선순위를 정하다","notification":"알림","context":"맥락",
-  "intentional":"의도적인","proactive":"주도적인","reactive":"반응적인",
-  "brainstorm":"브레인스토밍","hierarchy":"위계","novel":"참신한","inbox":"받은편지함",
-  "delegate":"위임하다","defer":"보류하다","methodology":"방법론","ergonomics":"인체공학",
-  "sedentary":"앉아서 하는","posture":"자세","placebo":"플라시보","sandbox":"샌드박스",
-  "sustainable":"지속 가능한","burnout":"번아웃","curiosity":"호기심","alertness":"주의력",
-  "stigma":"편견","inertia":"관성","reframing":"재정의","pandemic":"팬데믹",
-  "permanent":"영구적인","spontaneous":"자발적인","distractions":"방해 요소",
-  "innovation":"혁신","deadline":"마감 기한","stakeholder":"이해관계자",
-  "resilience":"회복 탄력성","benchmark":"벤치마크","iteration":"반복",
-  "leverage":"활용하다","scalable":"확장 가능한","optimize":"최적화하다",
-  "alignment":"정렬","autonomy":"자율성","agile":"애자일","strategy":"전략",
-  "implement":"구현하다","initiative":"이니셔티브","streamline":"간소화하다",
-  "feedback":"피드백","milestone":"마일스톤","onboarding":"온보딩","retention":"유지율",
-  "engagement":"참여도","efficiency":"효율성","workflow":"워크플로우","outcome":"성과",
-  "impact":"영향","insight":"통찰","revenue":"매출","acquisition":"인수",
-  "disruption":"파괴적 혁신","ecosystem":"생태계","platform":"플랫폼"
-};
-const koToEn = {};
-for (const [en,ko] of Object.entries(enToKo)) koToEn[ko] = en;
-
-function lookupWord(word) {
+// ── Word Lookup (sentence-pair based) ──
+function findMatchInPairs(word) {
+  const a = articles[currentDay];
+  if (!a || !a.content) return null;
   const lower = word.toLowerCase();
+
   if (currentTab === 'en') {
-    const ko = enToKo[lower];
-    return ko ? { displayWord:lower, meaning:ko } : { displayWord:lower, meaning:null };
-  } else {
-    const en = koToEn[word];
-    if (en) return { displayWord:en, meaning:word };
-    for (const [ek,kv] of Object.entries(enToKo)) {
-      if (word.includes(kv) || kv.includes(word)) return { displayWord:ek, meaning:kv };
+    for (const pair of a.content) {
+      const enWords = pair.en.toLowerCase().replace(/[.,;:!?'"()—\-]/g, '').split(/\s+/);
+      if (enWords.includes(lower)) {
+        const koWords = pair.ko.replace(/[.,;:!?'"()—\-]/g, '').split(/\s+/);
+        const idx = enWords.indexOf(lower);
+        const ratio = idx / enWords.length;
+        const koIdx = Math.min(Math.round(ratio * koWords.length), koWords.length - 1);
+        const candidate = koWords[koIdx];
+        if (candidate) return { displayWord: word, meaning: candidate };
+      }
     }
-    return { displayWord:word, meaning:null };
+  } else {
+    for (const pair of a.content) {
+      const koWords = pair.ko.replace(/[.,;:!?'"()—\-]/g, '').split(/\s+/);
+      const found = koWords.some(kw => kw.includes(word) || word.includes(kw));
+      if (found) {
+        const enWords = pair.en.toLowerCase().replace(/[.,;:!?'"()—\-]/g, '').split(/\s+/);
+        const koClean = koWords.map(w => w);
+        let matchIdx = koClean.findIndex(kw => kw.includes(word) || word.includes(kw));
+        if (matchIdx < 0) matchIdx = 0;
+        const ratio = matchIdx / koWords.length;
+        const enIdx = Math.min(Math.round(ratio * enWords.length), enWords.length - 1);
+        const candidate = enWords[enIdx];
+        if (candidate) return { displayWord: word, meaning: candidate };
+      }
+    }
   }
-}
-function getFallback(w) {
-  const m = ["(명) 비즈니스 핵심 용어","(동) 업무를 수행하다","(형) 조직 특성 표현","(명) 실용적 개념"];
-  return m[w.length % m.length];
+  return null;
 }
 
 // ── Render ──
@@ -604,21 +592,23 @@ document.addEventListener('DOMContentLoaded', () => {
     const sel = window.getSelection(); const word = sel.toString().trim();
     if (!word || word.includes(' ')) return;
     const range = sel.getRangeAt(0);
-    let ctx = range.startContainer;
-    while (ctx && ctx.nodeName !== 'P') ctx = ctx.parentNode;
-    selectedContext = ctx ? ctx.textContent.substring(0,120)+'...' : '';
-    const r = lookupWord(word);
-    selectedWord = r.displayWord;
-    selectedMeaning = r.meaning || getFallback(word);
-    const rect = range.getBoundingClientRect();
+
+    const match = findMatchInPairs(word);
+    if (!match) return;
+
+    selectedWord = match.displayWord;
+    selectedMeaning = match.meaning;
+    selectedContext = '';
+
     const tip = document.getElementById('tooltip');
     document.getElementById('tooltipWord').textContent = selectedWord;
     document.getElementById('tooltipMeaning').textContent = selectedMeaning;
-    document.getElementById('tooltipContext').textContent = `"${selectedContext}"`;
+
+    const rect = range.getBoundingClientRect();
     let left = rect.left + rect.width/2 - 120, top = rect.bottom + 10;
     if (left < 10) left = 10;
     if (left + 280 > window.innerWidth) left = window.innerWidth - 290;
-    if (top + 200 > window.innerHeight) top = rect.top - 180;
+    if (top + 160 > window.innerHeight) top = rect.top - 140;
     tip.style.left = left+'px'; tip.style.top = top+'px';
     tip.classList.add('show');
   });
