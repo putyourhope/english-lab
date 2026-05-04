@@ -671,30 +671,40 @@ function correctSentence(idx) {
 
 // ── Tooltip ──
 function hideTooltip() { document.getElementById('tooltip').classList.remove('show'); }
+function tryShowTooltip() {
+  const sel = window.getSelection();
+  const word = sel.toString().trim();
+  if (!word || word.includes(' ') || !sel.rangeCount) return;
+
+  const range = sel.getRangeAt(0);
+  const container = document.getElementById('articleContent');
+  if (!container || !container.contains(range.commonAncestorContainer)) return;
+
+  const match = findMatchInPairs(word);
+  if (!match) return;
+
+  selectedWord = match.displayWord;
+  selectedMeaning = match.meaning;
+  selectedContext = '';
+
+  const tip = document.getElementById('tooltip');
+  document.getElementById('tooltipWord').textContent = selectedWord;
+  document.getElementById('tooltipMeaning').textContent = selectedMeaning;
+
+  const rect = range.getBoundingClientRect();
+  let left = rect.left + rect.width/2 - 120, top = rect.bottom + 10;
+  if (left < 10) left = 10;
+  if (left + 260 > window.innerWidth) left = window.innerWidth - 270;
+  if (top + 160 > window.innerHeight) top = rect.top - 140;
+  tip.style.left = left+'px'; tip.style.top = top+'px';
+  tip.classList.add('show');
+}
 document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('articleContent').addEventListener('dblclick', function(e) {
-    const sel = window.getSelection(); const word = sel.toString().trim();
-    if (!word || word.includes(' ')) return;
-    const range = sel.getRangeAt(0);
-
-    const match = findMatchInPairs(word);
-    if (!match) return;
-
-    selectedWord = match.displayWord;
-    selectedMeaning = match.meaning;
-    selectedContext = '';
-
-    const tip = document.getElementById('tooltip');
-    document.getElementById('tooltipWord').textContent = selectedWord;
-    document.getElementById('tooltipMeaning').textContent = selectedMeaning;
-
-    const rect = range.getBoundingClientRect();
-    let left = rect.left + rect.width/2 - 120, top = rect.bottom + 10;
-    if (left < 10) left = 10;
-    if (left + 260 > window.innerWidth) left = window.innerWidth - 270;
-    if (top + 160 > window.innerHeight) top = rect.top - 140;
-    tip.style.left = left+'px'; tip.style.top = top+'px';
-    tip.classList.add('show');
+  // Desktop: double-click
+  document.getElementById('articleContent').addEventListener('dblclick', tryShowTooltip);
+  // Mobile: long-press selects text, then touchend fires
+  document.getElementById('articleContent').addEventListener('touchend', function() {
+    setTimeout(tryShowTooltip, 100);
   });
   document.addEventListener('click', function(e) {
     if (!e.target.closest('.tooltip') && !window.getSelection().toString().trim()) hideTooltip();
