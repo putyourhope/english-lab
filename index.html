@@ -178,12 +178,51 @@ body {
 .s-result { display:none; margin-top:8px; }
 .s-result.show { display:block; animation:slide .3s ease both; }
 .pulse-pop { animation:pulse .35s var(--spring); }
+
+/* ── Grading: Perfect ── */
+.s-perfect {
+  background:var(--accent-light); border:1.5px solid var(--accent);
+  border-radius:var(--r-sm); padding:10px 14px; display:flex; align-items:center; gap:10px;
+}
+.s-perfect-icon { font-size:22px; animation:pop .4s var(--spring) both; }
+.s-perfect-text { flex:1; }
+.s-perfect-label { font-size:13px; font-weight:700; color:var(--accent); }
+.s-perfect-score { font-size:11px; color:var(--text-sub); margin-top:2px; }
+
+/* ── Grading: Good ── */
+.s-good {
+  background:#f0fdf4; border:1.5px solid #86efac;
+  border-radius:var(--r-sm); padding:10px 14px; display:flex; align-items:center; gap:10px;
+}
+.s-good-icon { font-size:22px; animation:pop .4s var(--spring) both; }
+.s-good-text { flex:1; }
+.s-good-label { font-size:13px; font-weight:700; color:#16a34a; }
+.s-good-score { font-size:11px; color:var(--text-sub); margin-top:2px; }
+
+/* ── Grading: Needs Improvement ── */
 .s-diff { background:var(--bg); border:1px solid var(--border); border-radius:var(--r-sm); padding:8px 12px; font-size:12.5px; line-height:1.8; margin-bottom:6px; }
 .s-diff-del { background:var(--diff-del-bg); border-left:3px solid var(--diff-del); padding:2px 8px; margin:2px 0; border-radius:3px; text-decoration:line-through; color:#c0392b; font-size:12px; }
 .s-diff-add { background:var(--diff-add-bg); border-left:3px solid var(--diff-add); padding:2px 8px; margin:2px 0; border-radius:3px; color:#065f46; font-size:12px; }
+.s-improve-head { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+.s-improve-icon { font-size:18px; }
+.s-improve-label { font-size:13px; font-weight:700; color:var(--danger); }
+.s-improve-score { font-size:11px; color:var(--text-sub); }
+
+/* ── Shared: Tips & Suggestion ── */
 .s-tip { background:#fffbeb; border-left:3px solid #f59e0b; padding:6px 10px; border-radius:3px; margin-bottom:4px; font-size:12px; line-height:1.6; color:var(--text-sub); }
 .s-tip b { color:#d97706; margin-right:4px; }
+.s-alt { background:#f0f9ff; border-left:3px solid #38bdf8; padding:6px 10px; border-radius:3px; margin-top:6px; font-size:12px; line-height:1.6; color:var(--text-sub); }
+.s-alt b { color:#0284c7; margin-right:4px; }
 .s-empty { background:var(--accent-light); border-left:3px solid var(--accent); padding:8px 12px; border-radius:3px; font-size:12px; color:var(--text-sub); line-height:1.6; }
+
+/* ── Confetti ── */
+@keyframes confettiFall { 0%{transform:translateY(-10px) rotate(0deg);opacity:1} 100%{transform:translateY(120px) rotate(720deg);opacity:0} }
+.confetti-wrap { position:absolute; top:0; left:0; right:0; height:0; overflow:visible; pointer-events:none; z-index:10; }
+.confetti {
+  position:absolute; width:6px; height:6px; border-radius:1px;
+  animation:confettiFall 1.2s ease-out forwards;
+}
+.s-block { position:relative; overflow:hidden; }
 
 /* ── Tooltip ── */
 .tooltip {
@@ -537,7 +576,60 @@ const IEL = (() => {
     renderAll();
   }
 
-  // ── Correction ──
+  // ── Grading ──
+  function normalize(s) {
+    return s.toLowerCase().replace(/[^\w가-힣ㄱ-ㅎㅏ-ㅣ\s]/g, '').replace(/\s+/g, ' ').trim();
+  }
+
+  function similarity(a, b) {
+    const na = normalize(a), nb = normalize(b);
+    if (na === nb) return 1;
+    const wa = na.split(' '), wb = nb.split(' ');
+    const set = new Set(wb);
+    const overlap = wa.filter(w => set.has(w)).length;
+    return overlap / Math.max(wa.length, wb.length);
+  }
+
+  function grade(userText, pair) {
+    const fb = tab === 'en' ? pair.feedback_en_to_ko : pair.feedback_ko_to_en;
+    const ref = tab === 'en' ? pair.ko : pair.en;
+    if (!fb) return { status: 'Good', score: 70, feedback: '피드백 데이터 없이 평가합니다.', alternative: null, diff: null, comments: [] };
+
+    const simRef = similarity(userText, ref);
+    const simIdeal = similarity(userText, fb.ideal);
+    const best = Math.max(simRef, simIdeal);
+
+    let status, score;
+    if (best >= 0.8) { status = 'Perfect'; score = Math.round(85 + best * 15); }
+    else if (best >= 0.5) { status = 'Good'; score = Math.round(50 + best * 40); }
+    else { status = 'Needs Improvement'; score = Math.round(best * 60); }
+
+    return {
+      status, score,
+      feedback: fb.comments?.[0] || '',
+      alternative: (status !== 'Perfect' && fb.ideal) ? fb.ideal : null,
+      diff: status === 'Needs Improvement' ? fb.ideal : null,
+      comments: fb.comments || [],
+    };
+  }
+
+  function spawnConfetti(container) {
+    const wrap = document.createElement('div');
+    wrap.className = 'confetti-wrap';
+    const colors = ['#10b981','#f59e0b','#3b82f6','#ec4899','#8b5cf6','#ef4444'];
+    for (let i = 0; i < 20; i++) {
+      const c = document.createElement('div');
+      c.className = 'confetti';
+      c.style.left = Math.random() * 100 + '%';
+      c.style.background = colors[Math.floor(Math.random() * colors.length)];
+      c.style.animationDelay = Math.random() * 0.4 + 's';
+      c.style.animationDuration = (0.8 + Math.random() * 0.6) + 's';
+      wrap.appendChild(c);
+    }
+    container.appendChild(wrap);
+    setTimeout(() => wrap.remove(), 2000);
+  }
+
   function correct(idx) {
     const input = $('si' + idx);
     if (!input?.value.trim()) return toast('먼저 번역/영작을 입력해 주세요.');
@@ -545,6 +637,7 @@ const IEL = (() => {
     const btn = $(`sb${idx}b`);
     const loading = $('sl' + idx);
     const result = $('sr' + idx);
+    const block = $('sb' + idx);
     btn.disabled = true;
     result.classList.remove('show');
     result.innerHTML = '';
@@ -554,14 +647,47 @@ const IEL = (() => {
       loading.classList.remove('show');
       const text = input.value.trim();
       const pair = articles[day].content[idx];
-      const fb = tab === 'en' ? pair.feedback_en_to_ko : pair.feedback_ko_to_en;
+      const g = grade(text, pair);
 
-      let html;
-      if (!fb) {
-        html = '<div class="s-empty">피드백 데이터가 아직 준비되지 않았습니다.</div>';
+      let html = '';
+
+      if (g.status === 'Perfect') {
+        html += `<div class="s-perfect">
+          <span class="s-perfect-icon">&#x2728;</span>
+          <div class="s-perfect-text">
+            <div class="s-perfect-label">Perfect!</div>
+            <div class="s-perfect-score">${g.score}점 &mdash; 훌륭한 표현입니다!</div>
+          </div>
+        </div>`;
+        spawnConfetti(block);
+      } else if (g.status === 'Good') {
+        html += `<div class="s-good">
+          <span class="s-good-icon">&#x1f44d;</span>
+          <div class="s-good-text">
+            <div class="s-good-label">Good!</div>
+            <div class="s-good-score">${g.score}점 &mdash; 좋은 표현입니다!</div>
+          </div>
+        </div>`;
       } else {
-        const tips = fb.comments.map(c => `<div class="s-tip"><b>&#x1f4a1;</b>${esc(c)}</div>`).join('');
-        html = `<div class="s-diff"><div class="s-diff-del">- ${esc(text)}</div><div class="s-diff-add">+ ${esc(fb.ideal)}</div></div>${tips}`;
+        html += `<div class="s-improve-head">
+          <span class="s-improve-icon">&#x1f4dd;</span>
+          <span class="s-improve-label">Needs Improvement</span>
+          <span class="s-improve-score">${g.score}점</span>
+        </div>`;
+        if (g.diff) {
+          html += `<div class="s-diff">
+            <div class="s-diff-del">- ${esc(text)}</div>
+            <div class="s-diff-add">+ ${esc(g.diff)}</div>
+          </div>`;
+        }
+      }
+
+      if (g.comments.length) {
+        html += g.comments.map(c => `<div class="s-tip"><b>&#x1f4a1;</b>${esc(c)}</div>`).join('');
+      }
+
+      if (g.alternative && g.status !== 'Needs Improvement') {
+        html += `<div class="s-alt"><b>&#x1f4ac;</b>더 자연스러운 표현: ${esc(g.alternative)}</div>`;
       }
 
       result.innerHTML = html;
@@ -573,7 +699,7 @@ const IEL = (() => {
 
       store.results[key(day, tab, idx)] = html;
       saveStore();
-    }, 1600);
+    }, 1200);
   }
 
   // ── Tooltip ──

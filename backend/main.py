@@ -40,8 +40,9 @@ Rules:
 1. content: exactly 6-8 sentence pair objects (one sentence each, never merge)
 2. word_map: 5-8 lowercase EN keys → KO values per sentence, context-specific (not dictionary definitions)
 3. difficulty: 1-10 scale
-4. Each feedback: 2 comments, ideal must differ meaningfully from literal ko/en
-5. Valid JSON only, no markdown fences"""
+4. feedback.ideal: a MORE NATURAL alternative — not the only correct answer. Many translations are valid.
+5. feedback.comments: 2 items. First comment = what makes a good translation of this sentence (praise the key concept). Second comment = a specific nuance tip (word choice, register, or grammar point). Never say the user is wrong — offer improvement suggestions.
+6. Valid JSON only, no markdown fences"""
 
 
 def extract_image(entry):
