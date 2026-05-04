@@ -104,6 +104,10 @@ Given an article title, link, and summary, produce a JSON object with this exact
     {
       "en": "Original English sentence.",
       "ko": "한글 번역.",
+      "word_map": {
+        "english_word": "한글뜻",
+        "another_word": "다른뜻"
+      },
       "feedback_en_to_ko": {
         "ideal": "더 자연스러운 한글 번역 모범 답안",
         "comments": ["번역 팁 1", "번역 팁 2"]
@@ -120,6 +124,7 @@ CRITICAL RULES:
 - Summarize the article into EXACTLY 2 paragraphs. Each paragraph must contain 3-4 sentences.
 - The content array must contain 6 to 8 sentence pair objects in total. No more, no less.
 - Each sentence pair is one sentence — do NOT merge multiple sentences into one object.
+- word_map: For each sentence pair, extract 5-8 key vocabulary words that learners should know. Keys are lowercase English words from the sentence, values are the corresponding Korean translation AS USED IN THIS SPECIFIC SENTENCE CONTEXT. Example: {"assembled": "구축한", "portfolio": "포트폴리오", "diverse": "다양한"}. The mapping must reflect how the word is actually translated in the ko sentence, not a generic dictionary definition.
 - difficulty is 1-10 based on vocabulary/grammar complexity.
 - Each feedback has exactly 2 comments.
 - ideal translations should differ meaningfully from the literal ko/en to teach nuance.

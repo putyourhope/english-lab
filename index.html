@@ -238,8 +238,17 @@
     padding:14px 16px; box-shadow:var(--shadow-lg); min-width:180px; max-width:260px;
   }
   .tooltip.show { display:block; animation:popIn 0.35s var(--spring); }
-  .tooltip-word { font-size:16px; font-weight:700; color:var(--accent); margin-bottom:6px; }
-  .tooltip-meaning { font-size:14px; color:var(--text-primary); margin-bottom:12px; line-height:1.5; font-weight:600; }
+  .tooltip-pair {
+    display:flex; align-items:center; gap:8px; margin-bottom:12px; flex-wrap:wrap;
+  }
+  .tooltip-word { font-size:16px; font-weight:700; color:var(--accent); }
+  .tooltip-arrow { display:flex; align-items:center; animation:sparkleSlide 0.4s var(--spring) both; }
+  .tooltip-meaning { font-size:16px; font-weight:700; color:var(--text-primary); }
+  @keyframes sparkleSlide {
+    0% { opacity:0; transform:translateX(-6px) scale(0.5); }
+    60% { transform:translateX(2px) scale(1.15); }
+    100% { opacity:1; transform:translateX(0) scale(1); }
+  }
   .tooltip-btn {
     width:100%; padding:7px 12px; background:var(--accent); border:none;
     border-radius:var(--radius-sm); color:#fff; font-size:12px;
@@ -444,8 +453,13 @@
 
 <!-- Tooltip -->
 <div class="tooltip" id="tooltip">
-  <div class="tooltip-word" id="tooltipWord"></div>
-  <div class="tooltip-meaning" id="tooltipMeaning"></div>
+  <div class="tooltip-pair">
+    <span class="tooltip-word" id="tooltipWord"></span>
+    <span class="tooltip-arrow">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg>
+    </span>
+    <span class="tooltip-meaning" id="tooltipMeaning"></span>
+  </div>
   <button class="tooltip-btn" onclick="addToVocab()">+ 단어장에 추가</button>
 </div>
 
@@ -508,36 +522,31 @@ async function fetchArticles() {
   }));
 }
 
-// ── Word Lookup (sentence-pair based) ──
+// ── Word Lookup (word_map based) ──
 function findMatchInPairs(word) {
   const a = articles[currentDay];
   if (!a || !a.content) return null;
   const lower = word.toLowerCase();
 
-  if (currentTab === 'en') {
-    for (const pair of a.content) {
-      const enWords = pair.en.toLowerCase().replace(/[.,;:!?'"()—\-]/g, '').split(/\s+/);
-      if (enWords.includes(lower)) {
-        const koWords = pair.ko.replace(/[.,;:!?'"()—\-]/g, '').split(/\s+/);
-        const idx = enWords.indexOf(lower);
-        const ratio = idx / enWords.length;
-        const koIdx = Math.min(Math.round(ratio * koWords.length), koWords.length - 1);
-        const candidate = koWords[koIdx];
-        if (candidate) return { displayWord: word, meaning: candidate };
+  for (const pair of a.content) {
+    const wm = pair.word_map;
+    if (!wm) continue;
+
+    if (currentTab === 'en') {
+      // EN tab: clicked English word → find Korean meaning
+      if (wm[lower]) return { displayWord: word, meaning: wm[lower] };
+      // partial match (e.g. "technologies" → "technology")
+      for (const [enKey, koVal] of Object.entries(wm)) {
+        if (lower.startsWith(enKey) || enKey.startsWith(lower)) {
+          return { displayWord: word, meaning: koVal };
+        }
       }
-    }
-  } else {
-    for (const pair of a.content) {
-      const koWords = pair.ko.replace(/[.,;:!?'"()—\-]/g, '').split(/\s+/);
-      const found = koWords.some(kw => kw.includes(word) || word.includes(kw));
-      if (found) {
-        const enWords = pair.en.toLowerCase().replace(/[.,;:!?'"()—\-]/g, '').split(/\s+/);
-        let matchIdx = koWords.findIndex(kw => kw.includes(word) || word.includes(kw));
-        if (matchIdx < 0) matchIdx = 0;
-        const ratio = matchIdx / koWords.length;
-        const enIdx = Math.min(Math.round(ratio * enWords.length), enWords.length - 1);
-        const candidate = enWords[enIdx];
-        if (candidate) return { displayWord: word, meaning: candidate };
+    } else {
+      // KO tab: clicked Korean word → find English counterpart
+      for (const [enKey, koVal] of Object.entries(wm)) {
+        if (koVal === word || word.includes(koVal) || koVal.includes(word)) {
+          return { displayWord: word, meaning: enKey };
+        }
       }
     }
   }
