@@ -15,7 +15,7 @@ from supabase import create_client
 
 # ── 환경변수 ──
 SUPABASE_URL = os.environ["SUPABASE_URL"]
-SUPABASE_KEY = os.environ["SUPABASE_SERVICE_KEY"]  # service_role key (서버 전용)
+SUPABASE_KEY = os.environ["SUPABASE_KEY"]  # service_role key (서버 전용)
 OPENAI_API_KEY = os.environ["OPENAI_API_KEY"]
 
 sb = create_client(SUPABASE_URL, SUPABASE_KEY)
