@@ -6,827 +6,745 @@
 <title>IEL</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-  *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
-  :root {
-    --bg-body:#f5f6f8; --bg-white:#ffffff; --bg-hover:#edeef1;
-    --border:#e2e4e9; --text-primary:#1a1d27; --text-secondary:#5a5f72;
-    --text-muted:#9298a8;
-    --accent:#10b981; --accent-hover:#059669;
-    --accent-glow:rgba(16,185,129,0.15); --accent-light:#ecfdf5;
-    --danger:#e74c5c; --success:#2ecc71;
-    --diff-add-bg:rgba(16,185,129,0.10); --diff-add-border:#10b981;
-    --diff-del-bg:rgba(231,76,92,0.08); --diff-del-border:#e74c5c;
-    --radius:16px; --radius-sm:10px;
-    --shadow-sm:0 1px 3px rgba(0,0,0,0.06); --shadow-md:0 4px 16px rgba(0,0,0,0.08);
-    --shadow-lg:0 12px 40px rgba(0,0,0,0.12); --transition:0.2s ease;
-    --spring:cubic-bezier(0.34,1.56,0.64,1);
-  }
-  body {
-    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Noto Sans KR',sans-serif;
-    background:var(--bg-body); color:var(--text-primary);
-    height:100vh; overflow:hidden; display:flex; flex-direction:column;
-  }
+/* ── Reset & Design Tokens ── */
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+:root {
+  --bg:#f5f6f8; --surface:#fff; --border:#e2e4e9;
+  --text:#1a1d27; --text-sub:#5a5f72; --text-muted:#9298a8;
+  --accent:#10b981; --accent-hover:#059669;
+  --accent-glow:rgba(16,185,129,.15); --accent-light:#ecfdf5;
+  --danger:#e74c5c;
+  --diff-add-bg:rgba(16,185,129,.10); --diff-add:#10b981;
+  --diff-del-bg:rgba(231,76,92,.08); --diff-del:#e74c5c;
+  --r:16px; --r-sm:10px;
+  --sh-sm:0 1px 3px rgba(0,0,0,.06); --sh-md:0 4px 16px rgba(0,0,0,.08);
+  --sh-lg:0 12px 40px rgba(0,0,0,.12);
+  --ease:.2s ease; --spring:cubic-bezier(.34,1.56,.64,1);
+}
+body {
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Noto Sans KR',sans-serif;
+  background:var(--bg); color:var(--text);
+  height:100vh; overflow:hidden; display:flex; flex-direction:column;
+}
 
-  /* ── Loading Screen ── */
-  .loading-screen {
-    position:fixed; inset:0; z-index:9999; background:var(--bg-white);
-    display:grid; place-items:center;
-  }
-  .loading-screen.hide { display:none; }
-  .loading-content { text-align:center; }
-  .loading-logo {
-    width:56px; height:56px; background:var(--accent); border-radius:18px;
-    animation:popIn 0.6s var(--spring) both;
-    display:grid; place-items:center; font-weight:800; font-size:18px;
-    color:#fff; letter-spacing:-0.5px; margin:0 auto 24px;
-  }
-  .loading-dots { display:flex; gap:6px; justify-content:center; }
-  .loading-dots span {
-    width:8px; height:8px; border-radius:50%; background:var(--accent);
-    animation:ldot 1.2s ease infinite;
-  }
-  .loading-dots span:nth-child(2) { animation-delay:0.15s; }
-  .loading-dots span:nth-child(3) { animation-delay:0.3s; }
-  @keyframes ldot { 0%,80%,100%{opacity:0.2;transform:scale(0.8)} 40%{opacity:1;transform:scale(1.1)} }
+/* ── Animations ── */
+@keyframes pop  { 0%{opacity:0;transform:scale(.8)} 60%{transform:scale(1.06)} 80%{transform:scale(.97)} 100%{opacity:1;transform:scale(1)} }
+@keyframes pulse { 0%{transform:scale(1)} 50%{transform:scale(1.3)} 100%{transform:scale(1)} }
+@keyframes slide { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+@keyframes spin  { to{transform:rotate(360deg)} }
+@keyframes dot   { 0%,80%,100%{opacity:.2;transform:scale(.8)} 40%{opacity:1;transform:scale(1.1)} }
+@keyframes sparkle { 0%{opacity:0;transform:translateX(-6px) scale(.5)} 60%{transform:translateX(2px) scale(1.15)} 100%{opacity:1;transform:translateX(0) scale(1)} }
+@keyframes modal { 0%{opacity:0;transform:scale(.85)} 50%{transform:scale(1.03)} 70%{transform:scale(.98)} 100%{opacity:1;transform:scale(1)} }
 
-  /* ── Header ── */
-  .header {
-    display:flex; align-items:center; justify-content:space-between;
-    padding:10px 20px; background:var(--bg-white);
-    border-bottom:1px solid var(--border); flex-shrink:0;
-  }
-  .header-left { display:flex; align-items:center; gap:10px; }
-  .logo {
-    width:30px; height:30px; background:var(--accent); border-radius:10px;
-    display:grid; place-items:center; font-weight:800; font-size:11px;
-    color:#fff; letter-spacing:-0.5px;
-  }
-  .header h1 { font-size:15px; font-weight:700; letter-spacing:-0.3px; }
-  .header-right { display:flex; align-items:center; gap:8px; }
-  .btn-icon {
-    width:36px; height:36px; background:var(--bg-white); border:1px solid var(--border);
-    border-radius:var(--radius-sm); color:var(--text-secondary);
-    cursor:pointer; transition:var(--transition); display:grid; place-items:center;
-  }
-  .btn-icon:hover { border-color:var(--accent); color:var(--accent); background:var(--accent-light); transform:translateY(-2px); box-shadow:0 4px 12px var(--accent-glow); }
-  .btn-icon:active { transform:translateY(1px); box-shadow:none; }
-  .btn-icon svg { width:18px; height:18px; }
+/* ── Loading ── */
+.loading { position:fixed; inset:0; z-index:9999; background:var(--surface); display:grid; place-items:center; }
+.loading.hide { display:none; }
+.loading-logo {
+  width:56px; height:56px; background:var(--accent); border-radius:18px;
+  display:grid; place-items:center; font-weight:800; font-size:18px;
+  color:#fff; margin:0 auto 24px; animation:pop .6s var(--spring) both;
+}
+.loading-dots { display:flex; gap:6px; justify-content:center; }
+.loading-dots span { width:8px; height:8px; border-radius:50%; background:var(--accent); animation:dot 1.2s ease infinite; }
+.loading-dots span:nth-child(2) { animation-delay:.15s; }
+.loading-dots span:nth-child(3) { animation-delay:.3s; }
 
-  /* ── Layout ── */
-  .layout { display:flex; flex:1; overflow:hidden; }
+/* ── Header ── */
+.header {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:10px 20px; background:var(--surface);
+  border-bottom:1px solid var(--border); flex-shrink:0;
+}
+.header-left { display:flex; align-items:center; gap:10px; }
+.logo {
+  width:30px; height:30px; background:var(--accent); border-radius:10px;
+  display:grid; place-items:center; font-weight:800; font-size:11px; color:#fff;
+}
+.header h1 { font-size:15px; font-weight:700; }
+.btn-icon {
+  width:36px; height:36px; background:var(--surface); border:1px solid var(--border);
+  border-radius:var(--r-sm); color:var(--text-sub);
+  cursor:pointer; transition:var(--ease); display:grid; place-items:center;
+}
+.btn-icon:hover { border-color:var(--accent); color:var(--accent); background:var(--accent-light); transform:translateY(-2px); box-shadow:0 4px 12px var(--accent-glow); }
+.btn-icon:active { transform:translateY(1px); box-shadow:none; }
+.btn-icon svg { width:18px; height:18px; }
 
-  /* ── Sidebar (number-only pills) ── */
+/* ── Layout ── */
+.layout { display:flex; flex:1; overflow:hidden; }
+
+/* ── Sidebar ── */
+.sidebar {
+  width:60px; background:var(--surface); border-right:1px solid var(--border);
+  display:flex; flex-direction:column; align-items:center;
+  padding:12px 0; gap:8px; overflow-y:auto; flex-shrink:0;
+}
+.sidebar::-webkit-scrollbar { width:0; }
+.pill {
+  width:40px; height:40px; border-radius:50%; border:2px solid var(--border);
+  background:var(--surface); color:var(--text-sub);
+  font-size:14px; font-weight:700; cursor:pointer;
+  transition:var(--ease); display:grid; place-items:center;
+}
+.pill:hover { border-color:var(--accent); color:var(--accent); background:var(--accent-light); transform:translateY(-2px); }
+.pill:active { transform:translateY(1px); }
+.pill.on { background:var(--accent); color:#fff; border-color:var(--accent); box-shadow:0 3px 12px var(--accent-glow); animation:pop .3s var(--spring); }
+
+/* ── Panels ── */
+.main { display:flex; flex:1; overflow:hidden; }
+.panel { width:50%; display:flex; flex-direction:column; overflow:hidden; }
+.panel-l { border-right:1px solid var(--border); background:var(--surface); }
+.panel-r { background:var(--bg); }
+.panel-head { padding:14px 24px 0; flex-shrink:0; }
+
+/* ── Tabs ── */
+.tabs { display:flex; gap:4px; background:var(--bg); border-radius:var(--r-sm); padding:3px; }
+.tab {
+  flex:1; padding:8px 14px; background:transparent; border:none;
+  border-radius:5px; color:var(--text-muted); font-size:13px;
+  font-weight:600; cursor:pointer; transition:var(--ease);
+}
+.tab:hover { color:var(--text); transform:translateY(-1px); }
+.tab:active { transform:translateY(1px); }
+.tab.on { background:var(--accent); color:#fff; box-shadow:0 2px 8px var(--accent-glow); animation:pop .25s var(--spring); }
+
+/* ── Meta ── */
+.meta {
+  margin:12px 24px 0; padding:14px 18px; background:var(--bg);
+  border:1px solid var(--border); border-radius:var(--r); flex-shrink:0;
+}
+.meta-title { font-size:15px; font-weight:700; line-height:1.4; margin-bottom:6px; }
+.meta-summary { font-size:12.5px; color:var(--text-sub); line-height:1.6; margin-bottom:8px; }
+.meta-tags { display:flex; flex-wrap:wrap; gap:6px; }
+.tag {
+  display:inline-flex; align-items:center; gap:4px; padding:3px 9px;
+  background:var(--surface); border:1px solid var(--border); border-radius:20px;
+  font-size:11px; color:var(--text-sub); font-weight:500; white-space:nowrap;
+}
+.tag.diff { border-color:var(--accent); color:var(--accent); font-weight:600; }
+.tag a { color:var(--accent); text-decoration:none; font-weight:600; }
+.tag a:hover { text-decoration:underline; }
+
+/* ── Article Content ── */
+.article {
+  flex:1; padding:12px 24px 24px; overflow-y:auto; line-height:1.9; font-size:14.5px;
+}
+.article p { margin-bottom:14px; }
+.article::-webkit-scrollbar { width:4px; }
+.article::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
+.thumb { margin:0 24px 24px; background:transparent; }
+.thumb img { width:100%; height:auto; display:block; border-radius:12px; box-shadow:var(--sh-sm); }
+
+/* ── Clickable Words ── */
+.w { cursor:pointer; border-radius:3px; transition:background .15s; }
+.w:hover { background:var(--accent-glow); }
+.w:active { background:rgba(16,185,129,.25); }
+
+/* ── Sentence Practice ── */
+.sentences { flex:1; padding:14px 20px; overflow-y:auto; display:flex; flex-direction:column; gap:14px; }
+.sentences::-webkit-scrollbar { width:4px; }
+.sentences::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
+.s-block { background:var(--surface); border:1px solid var(--border); border-radius:var(--r); padding:12px 14px; box-shadow:var(--sh-sm); animation:slide .3s ease both; }
+.s-block:nth-child(1) { animation-delay:.05s; }
+.s-block:nth-child(2) { animation-delay:.1s; }
+.s-num {
+  display:inline-block; width:20px; height:20px; border-radius:50%;
+  background:var(--accent-light); color:var(--accent);
+  font-size:10px; font-weight:700; text-align:center; line-height:20px; margin-right:6px;
+}
+.s-text { font-size:13.5px; line-height:1.7; margin-bottom:8px; }
+.s-row { display:flex; gap:6px; align-items:flex-start; }
+.s-input {
+  flex:1; padding:9px 12px; border:1.5px solid var(--border);
+  border-radius:var(--r-sm); font-size:13px; font-family:inherit;
+  line-height:1.6; color:var(--text); background:var(--bg);
+  resize:none; min-height:40px; max-height:80px;
+  transition:border-color var(--ease), box-shadow var(--ease);
+}
+.s-input:focus { outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-glow); }
+.s-input::placeholder { color:var(--text-muted); }
+.s-btn {
+  width:40px; height:40px; background:transparent; border:1.5px solid var(--accent);
+  border-radius:var(--r-sm); color:var(--accent); cursor:pointer;
+  transition:var(--ease); flex-shrink:0; display:grid; place-items:center;
+}
+.s-btn:hover:not(:disabled) { background:var(--accent-light); transform:translateY(-2px); box-shadow:0 4px 12px var(--accent-glow); }
+.s-btn:active:not(:disabled) { transform:translateY(1px); box-shadow:none; }
+.s-btn:disabled { opacity:.4; cursor:not-allowed; }
+.s-btn svg { width:18px; height:18px; }
+.s-loading { display:none; align-items:center; gap:8px; padding:8px 0 2px; font-size:12px; color:var(--text-muted); }
+.s-loading.show { display:flex; }
+.s-spinner { width:14px; height:14px; border:2px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin .8s linear infinite; }
+.s-result { display:none; margin-top:8px; }
+.s-result.show { display:block; animation:slide .3s ease both; }
+.pulse-pop { animation:pulse .35s var(--spring); }
+.s-diff { background:var(--bg); border:1px solid var(--border); border-radius:var(--r-sm); padding:8px 12px; font-size:12.5px; line-height:1.8; margin-bottom:6px; }
+.s-diff-del { background:var(--diff-del-bg); border-left:3px solid var(--diff-del); padding:2px 8px; margin:2px 0; border-radius:3px; text-decoration:line-through; color:#c0392b; font-size:12px; }
+.s-diff-add { background:var(--diff-add-bg); border-left:3px solid var(--diff-add); padding:2px 8px; margin:2px 0; border-radius:3px; color:#065f46; font-size:12px; }
+.s-tip { background:#fffbeb; border-left:3px solid #f59e0b; padding:6px 10px; border-radius:3px; margin-bottom:4px; font-size:12px; line-height:1.6; color:var(--text-sub); }
+.s-tip b { color:#d97706; margin-right:4px; }
+.s-empty { background:var(--accent-light); border-left:3px solid var(--accent); padding:8px 12px; border-radius:3px; font-size:12px; color:var(--text-sub); line-height:1.6; }
+
+/* ── Tooltip ── */
+.tooltip {
+  display:none; position:fixed; z-index:5000; background:var(--surface);
+  border:1px solid var(--border); border-radius:var(--r);
+  padding:14px 16px; box-shadow:var(--sh-lg); min-width:180px; max-width:260px;
+}
+.tooltip.show { display:block; animation:pop .35s var(--spring); }
+.tooltip-pair { display:flex; align-items:center; gap:8px; margin-bottom:12px; flex-wrap:wrap; }
+.tooltip-word { font-size:16px; font-weight:700; color:var(--accent); }
+.tooltip-arrow { display:flex; align-items:center; animation:sparkle .4s var(--spring) both; }
+.tooltip-meaning { font-size:16px; font-weight:700; color:var(--text); }
+.tooltip-btn {
+  width:100%; padding:7px 12px; background:var(--accent); border:none;
+  border-radius:var(--r-sm); color:#fff; font-size:12px;
+  font-weight:600; cursor:pointer; transition:var(--ease);
+}
+.tooltip-btn:hover { background:var(--accent-hover); transform:translateY(-2px); box-shadow:0 4px 12px var(--accent-glow); }
+.tooltip-btn:active { transform:translateY(1px); box-shadow:none; }
+
+/* ── Modal ── */
+.overlay {
+  display:none; position:fixed; inset:0; z-index:6000;
+  background:rgba(0,0,0,.3); backdrop-filter:blur(4px); place-items:center;
+}
+.overlay.show { display:grid; }
+.modal {
+  background:var(--surface); border:1px solid var(--border); border-radius:20px;
+  width:520px; max-width:92vw; max-height:80vh;
+  display:flex; flex-direction:column; box-shadow:var(--sh-lg); animation:modal .25s ease;
+}
+.modal-head { display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1px solid var(--border); }
+.modal-head h2 { font-size:15px; font-weight:700; }
+.modal-close {
+  width:28px; height:28px; background:var(--bg); border:none;
+  border-radius:8px; color:var(--text-sub); font-size:16px;
+  cursor:pointer; display:grid; place-items:center; transition:var(--ease);
+}
+.modal-close:hover { background:var(--danger); color:#fff; }
+.modal-body { padding:16px 20px; overflow-y:auto; flex:1; }
+.modal-body::-webkit-scrollbar { width:4px; }
+.modal-body::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
+.v-empty { text-align:center; padding:32px 0; color:var(--text-muted); font-size:13px; }
+.v-item { display:flex; align-items:flex-start; gap:12px; padding:10px 0; border-bottom:1px solid var(--border); }
+.v-item:last-child { border-bottom:none; }
+.v-info { flex:1; }
+.v-word { font-size:14px; font-weight:700; color:var(--accent); margin-bottom:2px; }
+.v-mean { font-size:12.5px; color:var(--text-sub); margin-bottom:2px; }
+.v-ctx { font-size:11px; color:var(--text-muted); font-style:italic; line-height:1.5; }
+.v-del {
+  padding:4px 10px; background:transparent; border:1px solid var(--border);
+  border-radius:var(--r-sm); color:var(--text-muted); font-size:11px;
+  cursor:pointer; transition:var(--ease); flex-shrink:0; margin-top:2px;
+}
+.v-del:hover { background:var(--danger); border-color:var(--danger); color:#fff; transform:translateY(-1px); }
+
+/* ── Toast ── */
+.toast {
+  position:fixed; bottom:24px; left:50%;
+  transform:translateX(-50%) translateY(70px);
+  background:var(--text); border-radius:var(--r);
+  padding:10px 20px; font-size:13px; font-weight:600; color:#fff;
+  box-shadow:var(--sh-md); z-index:7000; opacity:0;
+  transition:transform .35s ease, opacity .35s ease;
+}
+.toast.show { opacity:1; transform:translateX(-50%) translateY(0); animation:pop .4s var(--spring); }
+
+/* ── FAB (mobile vocab) ── */
+.fab {
+  display:none; position:fixed; bottom:20px; right:20px; z-index:900;
+  width:52px; height:52px; border-radius:50%; border:none;
+  background:var(--accent); color:#fff; box-shadow:0 4px 16px var(--accent-glow);
+  cursor:pointer; transition:var(--ease);
+}
+.fab:active { transform:scale(.92); }
+.fab svg { width:22px; height:22px; }
+
+/* ── Mobile ( < 768px ) ── */
+@media (max-width:767px) {
+  body { height:auto; overflow:auto; }
+  .header { padding:8px 14px; }
+  .header h1 { font-size:14px; }
+  .header .desktop-only { display:none; }
+  .fab { display:grid; place-items:center; }
+
+  .layout { flex-direction:column; overflow:visible; }
   .sidebar {
-    width:60px; background:var(--bg-white); border-right:1px solid var(--border);
-    display:flex; flex-direction:column; align-items:center;
-    padding:12px 0; gap:8px; overflow-y:auto; flex-shrink:0;
+    width:100%; flex-direction:row; justify-content:center;
+    border-right:none; border-bottom:1px solid var(--border);
+    padding:8px 16px; gap:10px; overflow-x:auto;
+    position:sticky; top:0; z-index:100; background:var(--surface);
   }
-  .sidebar::-webkit-scrollbar { width:0; }
-  .sidebar-item {
-    width:40px; height:40px; border-radius:50%; border:2px solid var(--border);
-    background:var(--bg-white); color:var(--text-secondary);
-    font-size:14px; font-weight:700; cursor:pointer;
-    transition:var(--transition); display:grid; place-items:center;
-  }
-  .sidebar-item:hover { border-color:var(--accent); color:var(--accent); background:var(--accent-light); transform:translateY(-2px); }
-  .sidebar-item:active { transform:translateY(1px); }
-  .sidebar-item.active {
-    background:var(--accent); color:#fff; border-color:var(--accent);
-    box-shadow:0 3px 12px var(--accent-glow); animation:popIn 0.3s var(--spring);
-  }
+  .pill { width:38px; height:38px; font-size:13px; flex-shrink:0; }
 
-  .main { display:flex; flex:1; overflow:hidden; }
-  .panel { width:50%; display:flex; flex-direction:column; overflow:hidden; }
-  .panel-left { border-right:1px solid var(--border); background:var(--bg-white); }
-  .panel-right { background:var(--bg-body); }
-  .panel-header { padding:14px 24px 0; flex-shrink:0; }
-  .tabs { display:flex; gap:4px; background:var(--bg-body); border-radius:var(--radius-sm); padding:3px; }
-  .tab {
-    flex:1; padding:8px 14px; background:transparent; border:none;
-    border-radius:5px; color:var(--text-muted); font-size:13px;
-    font-weight:600; cursor:pointer; transition:var(--transition);
-  }
-  .tab:hover { color:var(--text-primary); transform:translateY(-1px); }
-  .tab:active { transform:translateY(1px); }
-  .tab.active { background:var(--accent); color:#fff; box-shadow:0 2px 8px var(--accent-glow); animation:popIn 0.25s var(--spring); }
-  .meta-box {
-    margin:12px 24px 0; padding:14px 18px; background:var(--bg-body);
-    border:1px solid var(--border); border-radius:var(--radius); flex-shrink:0;
-  }
-  .meta-title { font-size:15px; font-weight:700; line-height:1.4; margin-bottom:6px; }
-  .meta-summary { font-size:12.5px; color:var(--text-secondary); line-height:1.6; margin-bottom:8px; }
-  .meta-tags { display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
-  .meta-tag {
-    display:inline-flex; align-items:center; gap:4px; padding:3px 9px;
-    background:var(--bg-white); border:1px solid var(--border); border-radius:20px;
-    font-size:11px; color:var(--text-secondary); font-weight:500; white-space:nowrap;
-  }
-  .meta-tag.difficulty { border-color:var(--accent); color:var(--accent); font-weight:600; }
-  .meta-tag a { color:var(--accent); text-decoration:none; font-weight:600; }
-  .meta-tag a:hover { text-decoration:underline; }
-  .article-content {
-    flex:1; padding:12px 24px 24px; overflow-y:auto; line-height:1.9; font-size:14.5px;
-  }
-  .article-content p { margin-bottom:14px; }
-  .article-content::-webkit-scrollbar { width:4px; }
-  .article-content::-webkit-scrollbar-track { background:transparent; }
-  .article-content::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
+  .main { flex-direction:column; flex:none; overflow:visible; }
+  .panel { width:100%; overflow:visible; flex:none; }
+  .panel-l { border-right:none; }
+  .thumb { display:none; }
+  .article { overflow:visible; flex:none; }
 
-  /* ── Right: Sentence List ── */
-  .sentence-list {
-    flex:1; padding:14px 20px; overflow-y:auto;
-    display:flex; flex-direction:column; gap:14px;
-  }
-  .sentence-list::-webkit-scrollbar { width:4px; }
-  .sentence-list::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
-  .s-block {
-    background:var(--bg-white); border:1px solid var(--border);
-    border-radius:var(--radius); padding:12px 14px; box-shadow:var(--shadow-sm);
-  }
-  .s-num {
-    display:inline-block; width:20px; height:20px; border-radius:50%;
-    background:var(--accent-light); color:var(--accent); font-size:10px;
-    font-weight:700; text-align:center; line-height:20px; margin-right:6px; flex-shrink:0;
-  }
-  .s-source { font-size:13.5px; line-height:1.7; color:var(--text-primary); margin-bottom:8px; }
-  .s-input-row { display:flex; gap:6px; align-items:flex-start; }
-  .s-input {
-    flex:1; padding:9px 12px; border:1.5px solid var(--border);
-    border-radius:var(--radius-sm); font-size:13px; font-family:inherit;
-    line-height:1.6; color:var(--text-primary); background:var(--bg-body);
-    resize:none; min-height:40px; max-height:80px;
-    transition:border-color var(--transition), box-shadow var(--transition);
-  }
-  .s-input:focus { outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-glow); }
-  .s-input::placeholder { color:var(--text-muted); }
-  .s-btn {
-    width:40px; height:40px; background:transparent; border:1.5px solid var(--accent);
-    border-radius:var(--radius-sm); color:var(--accent); cursor:pointer;
-    transition:var(--transition); flex-shrink:0;
-    display:grid; place-items:center;
-  }
-  .s-btn:hover:not(:disabled) { background:var(--accent-light); border-color:var(--accent-hover); color:var(--accent-hover); transform:translateY(-2px); box-shadow:0 4px 12px var(--accent-glow); }
-  .s-btn:active:not(:disabled) { transform:translateY(1px); box-shadow:none; }
-  .s-btn:disabled { opacity:0.4; cursor:not-allowed; }
-  .s-btn svg { width:18px; height:18px; }
+  .panel-r { border-top:3px solid var(--accent); background:linear-gradient(180deg, var(--accent-light) 0%, var(--bg) 120px); }
+  .sentences { overflow:visible; flex:none; }
 
-  .s-loading {
-    display:none; align-items:center; gap:8px;
-    padding:8px 0 2px; font-size:12px; color:var(--text-muted);
-  }
-  .s-loading.show { display:flex; }
-  .s-spinner {
-    width:14px; height:14px; border:2px solid var(--border);
-    border-top-color:var(--accent); border-radius:50%;
-    animation:spin 0.8s linear infinite;
-  }
-  @keyframes spin { to { transform:rotate(360deg); } }
-  @keyframes popIn {
-    0% { opacity:0; transform:scale(0.8); }
-    60% { transform:scale(1.06); }
-    80% { transform:scale(0.97); }
-    100% { opacity:1; transform:scale(1); }
-  }
-  @keyframes pulse {
-    0% { transform:scale(1); }
-    50% { transform:scale(1.3); }
-    100% { transform:scale(1); }
-  }
-  @keyframes slideUp {
-    from { opacity:0; transform:translateY(10px); }
-    to { opacity:1; transform:translateY(0); }
-  }
-  .s-block { animation:slideUp 0.3s ease both; }
-  .s-block:nth-child(1) { animation-delay:0.05s; }
-  .s-block:nth-child(2) { animation-delay:0.1s; }
-  .s-result.show { animation:slideUp 0.3s ease both; }
-  .pulse-pop { animation:pulse 0.35s var(--spring); }
-
-  .s-result { display:none; margin-top:8px; }
-  .s-result.show { display:block; }
-  .s-diff {
-    background:var(--bg-body); border:1px solid var(--border);
-    border-radius:var(--radius-sm); padding:8px 12px;
-    font-size:12.5px; line-height:1.8; margin-bottom:6px;
-  }
-  .s-diff-del {
-    background:var(--diff-del-bg); border-left:3px solid var(--diff-del-border);
-    padding:2px 8px; margin:2px 0; border-radius:3px;
-    text-decoration:line-through; color:#c0392b; font-size:12px;
-  }
-  .s-diff-add {
-    background:var(--diff-add-bg); border-left:3px solid var(--diff-add-border);
-    padding:2px 8px; margin:2px 0; border-radius:3px;
-    color:#065f46; font-size:12px;
-  }
-  .s-comment {
-    background:#fffbeb; border-left:3px solid #f59e0b;
-    padding:6px 10px; border-radius:3px; margin-bottom:4px;
-    font-size:12px; line-height:1.6; color:var(--text-secondary);
-  }
-  .s-comment-icon { font-weight:700; color:#d97706; margin-right:4px; }
-  .s-no-feedback {
-    background:var(--accent-light); border-left:3px solid var(--accent);
-    padding:8px 12px; border-radius:3px; font-size:12px;
-    color:var(--text-secondary); line-height:1.6;
-  }
-
-  /* ── Clickable words ── */
-  .w { cursor:pointer; border-radius:3px; transition:background 0.15s; }
-  .w:hover { background:var(--accent-glow); }
-  .w:active { background:rgba(16,185,129,0.25); }
-
-  /* ── Tooltip ── */
-  .tooltip {
-    display:none; position:fixed; z-index:5000; background:var(--bg-white);
-    border:1px solid var(--border); border-radius:var(--radius);
-    padding:14px 16px; box-shadow:var(--shadow-lg); min-width:180px; max-width:260px;
-    pointer-events:auto;
-  }
-  .tooltip.show { animation:popIn 0.35s var(--spring); }
-  .tooltip-pair {
-    display:flex; align-items:center; gap:8px; margin-bottom:12px; flex-wrap:wrap;
-  }
-  .tooltip-word { font-size:16px; font-weight:700; color:var(--accent); }
-  .tooltip-arrow { display:flex; align-items:center; animation:sparkleSlide 0.4s var(--spring) both; }
-  .tooltip-meaning { font-size:16px; font-weight:700; color:var(--text-primary); }
-  @keyframes sparkleSlide {
-    0% { opacity:0; transform:translateX(-6px) scale(0.5); }
-    60% { transform:translateX(2px) scale(1.15); }
-    100% { opacity:1; transform:translateX(0) scale(1); }
-  }
-  .tooltip-btn {
-    width:100%; padding:7px 12px; background:var(--accent); border:none;
-    border-radius:var(--radius-sm); color:#fff; font-size:12px;
-    font-weight:600; cursor:pointer; transition:var(--transition);
-  }
-  .tooltip-btn:hover { background:var(--accent-hover); transform:translateY(-2px); box-shadow:0 4px 12px var(--accent-glow); }
-  .tooltip-btn:active { transform:translateY(1px); box-shadow:none; }
-
-  /* ── Modal ── */
-  .modal-overlay {
-    display:none; position:fixed; inset:0; z-index:2000;
-    background:rgba(0,0,0,0.3); backdrop-filter:blur(4px); place-items:center;
-  }
-  .modal-overlay.show { display:grid; }
-  .modal {
-    background:var(--bg-white); border:1px solid var(--border); border-radius:20px;
-    width:520px; max-width:92vw; max-height:80vh;
-    display:flex; flex-direction:column; box-shadow:var(--shadow-lg);
-    animation:modalIn 0.25s ease;
-  }
-  @keyframes modalIn {
-    0% { opacity:0; transform:scale(0.85); }
-    50% { transform:scale(1.03); }
-    70% { transform:scale(0.98); }
-    100% { opacity:1; transform:scale(1); }
-  }
-  .modal-header {
-    display:flex; align-items:center; justify-content:space-between;
-    padding:16px 20px; border-bottom:1px solid var(--border);
-  }
-  .modal-header h2 { font-size:15px; font-weight:700; }
-  .modal-close {
-    width:28px; height:28px; background:var(--bg-body); border:none;
-    border-radius:8px; color:var(--text-secondary); font-size:16px;
-    cursor:pointer; display:grid; place-items:center; transition:var(--transition);
-  }
-  .modal-close:hover { background:var(--danger); color:#fff; }
-  .modal-body { padding:16px 20px; overflow-y:auto; flex:1; }
-  .modal-body::-webkit-scrollbar { width:4px; }
-  .modal-body::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
-  .vocab-empty { text-align:center; padding:32px 0; color:var(--text-muted); font-size:13px; }
-  .vocab-item {
-    display:flex; align-items:flex-start; gap:12px; padding:10px 0;
-    border-bottom:1px solid var(--border);
-  }
-  .vocab-item:last-child { border-bottom:none; }
-  .vocab-info { flex:1; }
-  .vocab-word { font-size:14px; font-weight:700; color:var(--accent); margin-bottom:2px; }
-  .vocab-meaning { font-size:12.5px; color:var(--text-secondary); margin-bottom:2px; }
-  .vocab-ctx { font-size:11px; color:var(--text-muted); font-style:italic; line-height:1.5; }
-  .vocab-del {
-    padding:4px 10px; background:transparent; border:1px solid var(--border);
-    border-radius:var(--radius-sm); color:var(--text-muted); font-size:11px;
-    cursor:pointer; transition:var(--transition); flex-shrink:0; margin-top:2px;
-  }
-  .vocab-del:hover { background:var(--danger); border-color:var(--danger); color:#fff; transform:translateY(-1px); }
-  .vocab-del:active { transform:translateY(1px); }
-  .toast {
-    position:fixed; bottom:24px; left:50%;
-    transform:translateX(-50%) translateY(70px);
-    background:var(--text-primary); border-radius:var(--radius);
-    padding:10px 20px; font-size:13px; font-weight:600; color:#fff;
-    box-shadow:var(--shadow-md); z-index:3000; opacity:0;
-    transition:transform 0.35s ease, opacity 0.35s ease;
-  }
-  .toast.show { opacity:1; transform:translateX(-50%) translateY(0); animation:popIn 0.4s var(--spring); }
-
-  /* ── Thumbnail ── */
-  .article-thumb {
-    margin:0 24px 24px; flex-shrink:0; background:transparent;
-  }
-  .article-thumb img {
-    width:100%; height:auto; display:block;
-    border-radius:12px; box-shadow:var(--shadow-sm);
-  }
-
-  /* (mobile-panel-toggle removed — single-page stack) */
-
-  /* ── Floating vocab button (mobile) ── */
-  .fab-vocab {
-    display:none; position:fixed; bottom:20px; right:20px; z-index:900;
-    width:52px; height:52px; border-radius:50%; border:none;
-    background:var(--accent); color:#fff; box-shadow:0 4px 16px var(--accent-glow);
-    cursor:pointer; transition:var(--transition);
-  }
-  .fab-vocab:active { transform:scale(0.92); }
-  .fab-vocab svg { width:22px; height:22px; }
-
-  /* ══════════════════════════════════════
-     MOBILE RESPONSIVE ( < 768px )
-     ══════════════════════════════════════ */
-  @media (max-width:767px) {
-    /* Full-page scroll instead of fixed viewport */
-    body { height:auto; overflow:auto; }
-
-    .header { padding:8px 14px; }
-    .header h1 { font-size:14px; }
-    .header .btn-icon-desktop { display:none; }
-
-    .fab-vocab { display:grid; place-items:center; }
-
-    /* Layout stacks vertically, scrollable */
-    .layout { flex-direction:column; flex:1; overflow:visible; }
-
-    /* Sidebar → sticky horizontal pill bar */
-    .sidebar {
-      width:100%; flex-direction:row; justify-content:center;
-      border-right:none; border-bottom:1px solid var(--border);
-      padding:8px 16px; gap:10px; overflow-x:auto;
-      flex-shrink:0;
-      position:sticky; top:0; z-index:100; background:var(--bg-white);
-    }
-    .sidebar-item { width:38px; height:38px; font-size:13px; flex-shrink:0; }
-
-    /* Main stacks vertically, no overflow hidden */
-    .main { flex-direction:column; flex:none; overflow:visible; }
-
-    /* Both panels visible, stacked vertically */
-    .panel { width:100%; overflow:visible; flex:none; }
-    .panel-left { border-right:none; }
-
-    /* Hide images on mobile */
-    .article-thumb { display:none; }
-
-    /* Article content: no internal scroll */
-    .article-content { overflow:visible; flex:none; }
-
-    /* Practice section separator */
-    .panel-right {
-      border-top:3px solid var(--accent);
-      background:linear-gradient(180deg, var(--accent-light) 0%, var(--bg-body) 120px);
-    }
-    .sentence-list { overflow:visible; flex:none; }
-
-    /* Adjust padding */
-    .panel-header { padding:10px 16px 0; }
-    .meta-box { margin:8px 16px 0; padding:10px 14px; }
-    .meta-title { font-size:14px; }
-    .meta-summary { font-size:12px; }
-    .article-content { padding:10px 16px 16px; font-size:13.5px; line-height:1.8; }
-
-    .sentence-list { padding:10px 14px; gap:10px; }
-    .s-block { padding:10px 12px; }
-    .s-source { font-size:13px; }
-    .s-input { font-size:12.5px; padding:8px 10px; min-height:38px; }
-    .s-btn { width:38px; height:38px; }
-    .s-btn svg { width:16px; height:16px; }
-
-    .toast { bottom:80px; font-size:12px; padding:8px 16px; }
-  }
+  .panel-head { padding:10px 16px 0; }
+  .meta { margin:8px 16px 0; padding:10px 14px; }
+  .meta-title { font-size:14px; }
+  .meta-summary { font-size:12px; }
+  .article { padding:10px 16px 16px; font-size:13.5px; line-height:1.8; }
+  .sentences { padding:10px 14px; gap:10px; }
+  .s-block { padding:10px 12px; }
+  .s-text { font-size:13px; }
+  .s-input { font-size:12.5px; padding:8px 10px; min-height:38px; }
+  .s-btn { width:38px; height:38px; }
+  .s-btn svg { width:16px; height:16px; }
+  .toast { bottom:80px; font-size:12px; padding:8px 16px; }
+}
 </style>
 </head>
 <body>
 
-<!-- Loading Screen -->
-<div class="loading-screen" id="loadingScreen">
-  <div class="loading-content">
+<div class="loading" id="loader">
+  <div style="text-align:center">
     <div class="loading-logo">IEL</div>
     <div class="loading-dots"><span></span><span></span><span></span></div>
   </div>
 </div>
 
-<!-- Header -->
-<header class="header" id="appHeader" style="display:none">
+<header class="header" id="hdr" style="display:none">
   <div class="header-left">
     <div class="logo">IEL</div>
     <h1>IEL</h1>
   </div>
-  <div class="header-right">
-    <button class="btn-icon btn-icon-desktop" onclick="openVocabModal()" title="단어장">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
-    </button>
-  </div>
+  <button class="btn-icon desktop-only" onclick="IEL.openVocab()" title="단어장">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
+  </button>
 </header>
 
-<!-- Layout -->
-<div class="layout" id="appLayout" style="display:none">
+<div class="layout" id="app" style="display:none">
   <nav class="sidebar" id="sidebar"></nav>
   <div class="main">
-    <div class="panel panel-left" id="panelLeft">
-      <div class="panel-header">
-        <div class="tabs">
-          <button class="tab active" data-tab="en" onclick="switchTab('en')">English</button>
-          <button class="tab" data-tab="ko" onclick="switchTab('ko')">Korean</button>
+    <div class="panel panel-l">
+      <div class="panel-head">
+        <div class="tabs" id="tabs">
+          <button class="tab on" data-tab="en">English</button>
+          <button class="tab" data-tab="ko">Korean</button>
         </div>
       </div>
-      <div class="meta-box" id="metaBox"></div>
-      <div class="article-content" id="articleContent"></div>
+      <div class="meta" id="meta"></div>
+      <div class="article" id="article"></div>
     </div>
-    <div class="panel panel-right" id="panelRight">
-      <div class="sentence-list" id="sentenceList"></div>
+    <div class="panel panel-r">
+      <div class="sentences" id="sentences"></div>
     </div>
   </div>
 </div>
 
-<!-- Floating vocab button (mobile) -->
-<button class="fab-vocab" id="fabVocab" onclick="openVocabModal()" title="단어장">
+<button class="fab" onclick="IEL.openVocab()" title="단어장">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
 </button>
 
-<!-- Tooltip -->
-<div class="tooltip" id="tooltip">
+<div class="tooltip" id="tip">
   <div class="tooltip-pair">
-    <span class="tooltip-word" id="tooltipWord"></span>
-    <span class="tooltip-arrow">
+    <span class="tooltip-word" id="tipW"></span>
+    <span class="tooltip-arrow" id="tipArr">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg>
     </span>
-    <span class="tooltip-meaning" id="tooltipMeaning"></span>
+    <span class="tooltip-meaning" id="tipM"></span>
   </div>
-  <button class="tooltip-btn" onclick="addToVocab()">+ 단어장에 추가</button>
+  <button class="tooltip-btn" id="tipBtn">+ 단어장에 추가</button>
 </div>
 
-<!-- Vocab Modal -->
-<div class="modal-overlay" id="vocabModal">
+<div class="overlay" id="vocabOverlay">
   <div class="modal">
-    <div class="modal-header">
+    <div class="modal-head">
       <h2>나만의 단어장</h2>
-      <button class="modal-close" onclick="closeVocabModal()">&times;</button>
+      <button class="modal-close" id="vocabClose">&times;</button>
     </div>
     <div class="modal-body" id="vocabList"></div>
   </div>
 </div>
+
 <div class="toast" id="toast"></div>
 
 <script>
-// ── Supabase ──
-const SUPABASE_URL = "https://wwwwvdtuovcfsauekxrt.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind3d3d2ZHR1b3ZjZnNhdWVreHJ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc4MTIxOTksImV4cCI6MjA5MzM4ODE5OX0.xYeW0i95Nidv6BTiF2DhIHXgykRPrMLLxdXK7AfclkU";
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const IEL = (() => {
+  // ── Config ──
+  const SB_URL = "https://wwwwvdtuovcfsauekxrt.supabase.co";
+  const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind3d3d2ZHR1b3ZjZnNhdWVreHJ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc4MTIxOTksImV4cCI6MjA5MzM4ODE5OX0.xYeW0i95Nidv6BTiF2DhIHXgykRPrMLLxdXK7AfclkU";
+  const sb = supabase.createClient(SB_URL, SB_KEY);
 
-// ── State ──
-let articles = [];
-let currentTab = 'en', currentDay = 0;
-let selectedWord = '', selectedMeaning = '', selectedContext = '';
+  // ── State ──
+  let articles = [], tab = 'en', day = 0;
+  let tipWord = '', tipMeaning = '';
+  const store = { inputs: {}, results: {} };
 
-// ── State Persistence ──
-const store = { inputs:{}, results:{} };
+  // ── DOM Cache ──
+  const $ = id => document.getElementById(id);
+  const esc = s => { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; };
 
-function loadStore() {
-  try {
-    const s = sessionStorage.getItem('iel');
-    if (s) { const p = JSON.parse(s); Object.assign(store.inputs, p.inputs||{}); Object.assign(store.results, p.results||{}); }
-  } catch(e){}
-}
-function saveStore() {
-  try { sessionStorage.setItem('iel', JSON.stringify(store)); } catch(e){}
-}
-function sk(d,t,i) { return d+'_'+t+'_'+i; }
-function onInput(idx, val) { store.inputs[sk(currentDay,currentTab,idx)] = val; saveStore(); }
-function getInput(d,t,i) { return store.inputs[sk(d,t,i)] || ''; }
-function saveResult(d,t,i,html) { store.results[sk(d,t,i)] = html; saveStore(); }
-function getResult(d,t,i) { return store.results[sk(d,t,i)] || ''; }
+  // ── Session Persistence ──
+  const key = (d, t, i) => `${d}_${t}_${i}`;
 
-// ── Fetch from Supabase ──
-async function fetchArticles() {
-  const { data, error } = await sb.from('articles').select('*').order('date', { ascending: false }).limit(3);
-  if (error) throw new Error(error.message);
-  if (!data || data.length === 0) return [];
-  return data.map(row => ({
-    id: row.id,
-    title: row.title,
-    summary: row.summary,
-    difficulty: row.difficulty,
-    sourceName: row.source_name,
-    sourceUrl: row.source_url,
-    date: row.date,
-    image_url: row.image_url || null,
-    content: typeof row.content === 'string' ? JSON.parse(row.content) : row.content,
-  }));
-}
+  function loadStore() {
+    try {
+      const s = sessionStorage.getItem('iel');
+      if (s) { const p = JSON.parse(s); Object.assign(store.inputs, p.inputs || {}); Object.assign(store.results, p.results || {}); }
+    } catch {}
+  }
 
-// ── Word Lookup (word_map based) ──
-function findMatchInPairs(word) {
-  const a = articles[currentDay];
-  if (!a || !a.content) return null;
-  const lower = word.toLowerCase();
+  function saveStore() {
+    try { sessionStorage.setItem('iel', JSON.stringify(store)); } catch {}
+  }
 
-  for (const pair of a.content) {
-    const wm = pair.word_map;
-    if (!wm) continue;
+  // ── Data ──
+  async function fetchArticles() {
+    const { data, error } = await sb.from('articles').select('*').order('date', { ascending: false }).limit(3);
+    if (error) throw new Error(error.message);
+    return (data || []).map(r => ({
+      id: r.id, title: r.title, summary: r.summary, difficulty: r.difficulty,
+      sourceName: r.source_name, sourceUrl: r.source_url, date: r.date,
+      imageUrl: r.image_url || null,
+      content: typeof r.content === 'string' ? JSON.parse(r.content) : r.content,
+    }));
+  }
 
-    if (currentTab === 'en') {
-      // EN tab: clicked English word → find Korean meaning
-      if (wm[lower]) return { displayWord: word, meaning: wm[lower] };
-      // partial match (e.g. "technologies" → "technology")
-      for (const [enKey, koVal] of Object.entries(wm)) {
-        if (lower.startsWith(enKey) || enKey.startsWith(lower)) {
-          return { displayWord: word, meaning: koVal };
+  // ── Word Lookup ──
+  function lookup(word) {
+    const a = articles[day];
+    if (!a?.content) return null;
+    const lower = word.toLowerCase();
+
+    for (const pair of a.content) {
+      const wm = pair.word_map;
+      if (!wm) continue;
+
+      if (tab === 'en') {
+        if (wm[lower]) return { word, meaning: wm[lower] };
+        for (const [k, v] of Object.entries(wm)) {
+          if (lower.startsWith(k) || k.startsWith(lower)) return { word, meaning: v };
         }
-      }
-    } else {
-      // KO tab: clicked Korean word → find English counterpart
-      for (const [enKey, koVal] of Object.entries(wm)) {
-        if (koVal === word || word.includes(koVal) || koVal.includes(word)) {
-          return { displayWord: word, meaning: enKey };
+      } else {
+        for (const [k, v] of Object.entries(wm)) {
+          if (v === word || word.includes(v) || v.includes(word)) return { word, meaning: k };
         }
       }
     }
+    return null;
   }
-  return null;
-}
 
-// ── Render ──
-function renderDifficulty(lv) {
-  return '<span style="letter-spacing:-1px">'+'★'.repeat(lv)+'<span style="opacity:0.2">★</span>'.repeat(10-lv)+'</span> '+lv+'/10';
-}
-function renderMeta() {
-  const a = articles[currentDay];
-  document.getElementById('metaBox').innerHTML = `
-    <div class="meta-title">${esc(a.title)}</div>
-    <div class="meta-summary">${esc(a.summary)}</div>
-    <div class="meta-tags">
-      <span class="meta-tag difficulty">${renderDifficulty(a.difficulty)}</span>
-      <span class="meta-tag"><a href="${esc(a.sourceUrl)}" target="_blank" rel="noopener">${esc(a.sourceName)}</a></span>
-      <span class="meta-tag">${esc(a.date)}</span>
-    </div>`;
-}
-function renderSidebar() {
-  document.getElementById('sidebar').innerHTML = articles.map((a,i) => `
-    <button class="sidebar-item${i===currentDay?' active':''}" onclick="selectDay(${i})" title="${esc(a.title)}">
-      ${i+1}
-    </button>`).join('');
-}
-function wrapWords(text) {
-  return text.replace(/(\S+)/g, (m) => {
-    const clean = m.replace(/[^a-zA-Z0-9가-힣ㄱ-ㅎㅏ-ㅣ]/g, '');
-    return `<span class="w" data-word="${esc(clean)}">${esc(m)}</span>`;
-  });
-}
-function renderArticle() {
-  const a = articles[currentDay];
-  const pairs = a.content;
-  const total = pairs.length;
-  const perPara = Math.ceil(total / 3);
-  const paras = []; let buf = [];
-  pairs.forEach((p,i) => {
-    buf.push(wrapWords(currentTab === 'en' ? p.en : p.ko));
-    if (buf.length >= perPara || i === total - 1) { paras.push(buf.join(' ')); buf = []; }
-  });
-  let html = paras.map(p=>`<p>${p}</p>`).join('');
-  if (a.image_url) {
-    html += `<div class="article-thumb"><img src="${esc(a.image_url)}" alt="${esc(a.title)}" onerror="this.parentElement.style.display='none'"></div>`;
+  // ── Render Helpers ──
+  function stars(lv) {
+    return `<span style="letter-spacing:-1px">${'★'.repeat(lv)}<span style="opacity:.2">${'★'.repeat(10 - lv)}</span></span> ${lv}/10`;
   }
-  document.getElementById('articleContent').innerHTML = html;
-}
-function renderSentences() {
-  const a = articles[currentDay];
-  const list = document.getElementById('sentenceList');
-  const srcKey = currentTab === 'en' ? 'en' : 'ko';
-  const d = currentDay, t = currentTab;
 
-  list.innerHTML = a.content.map((pair, i) => {
-    const savedVal = getInput(d,t,i);
-    const savedRes = getResult(d,t,i);
-    return `
-    <div class="s-block" id="sb-${i}">
-      <div class="s-source"><span class="s-num">${i+1}</span>${esc(pair[srcKey])}</div>
-      <div class="s-input-row">
-        <textarea class="s-input" id="si-${i}" rows="1"
-          oninput="autoResize(this);onInput(${i},this.value)">${esc(savedVal)}</textarea>
-        <button class="s-btn" id="sbtn-${i}" onclick="correctSentence(${i})" title="AI 교정">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5z"/><path d="M19 2l.5 1.5L21 4l-1.5.5L19 6l-.5-1.5L17 4l1.5-.5z"/><path d="M5 18l.5 1.5L7 20l-1.5.5L5 22l-.5-1.5L3 20l1.5-.5z"/></svg>
-        </button>
-      </div>
-      <div class="s-loading" id="sl-${i}"><div class="s-spinner"></div> 분석 중...</div>
-      <div class="s-result${savedRes?' show':''}" id="sr-${i}">${savedRes}</div>
-    </div>`;
-  }).join('');
+  function wrapWords(text) {
+    return text.replace(/(\S+)/g, m => {
+      const clean = m.replace(/[^a-zA-Z0-9가-힣ㄱ-ㅎㅏ-ㅣ]/g, '');
+      return `<span class="w" data-word="${esc(clean)}">${esc(m)}</span>`;
+    });
+  }
 
-  a.content.forEach((_,i) => {
-    const el = document.getElementById('si-'+i);
-    if (el && el.value) autoResize(el);
-  });
-}
-function autoResize(el) {
-  el.style.height = 'auto';
-  el.style.height = Math.min(el.scrollHeight, 80) + 'px';
-}
-function selectDay(i) {
-  currentDay = i;
-  renderSidebar(); renderArticle(); renderMeta(); renderSentences(); hideTooltip();
-}
-function switchTab(tab) {
-  currentTab = tab;
-  document.querySelectorAll('.panel-header .tab, .panel-left .tab').forEach(t => t.classList.toggle('active', t.dataset.tab===tab));
-  renderArticle(); renderMeta(); renderSentences(); hideTooltip();
-}
+  // ── Renderers ──
+  function renderSidebar() {
+    $('sidebar').innerHTML = articles.map((a, i) =>
+      `<button class="pill${i === day ? ' on' : ''}" data-day="${i}" title="${esc(a.title)}">${i + 1}</button>`
+    ).join('');
+  }
 
-// ── Per-sentence AI Correction ──
-function correctSentence(idx) {
-  const input = document.getElementById('si-'+idx);
-  if (!input.value.trim()) { showToast('먼저 번역/영작을 입력해 주세요.'); return; }
-  const btn = document.getElementById('sbtn-'+idx);
-  const loading = document.getElementById('sl-'+idx);
-  const result = document.getElementById('sr-'+idx);
-  btn.disabled = true;
-  result.classList.remove('show'); result.innerHTML = '';
-  loading.classList.add('show');
+  function renderMeta() {
+    const a = articles[day];
+    $('meta').innerHTML =
+      `<div class="meta-title">${esc(a.title)}</div>` +
+      `<div class="meta-summary">${esc(a.summary)}</div>` +
+      `<div class="meta-tags">` +
+        `<span class="tag diff">${stars(a.difficulty)}</span>` +
+        `<span class="tag"><a href="${esc(a.sourceUrl)}" target="_blank" rel="noopener">${esc(a.sourceName)}</a></span>` +
+        `<span class="tag">${esc(a.date)}</span>` +
+      `</div>`;
+  }
 
-  setTimeout(() => {
-    loading.classList.remove('show');
-    const userText = input.value.trim();
-    const pair = articles[currentDay].content[idx];
-    const feedback = currentTab === 'en' ? pair.feedback_en_to_ko : pair.feedback_ko_to_en;
+  function renderArticle() {
+    const a = articles[day];
+    const pairs = a.content;
+    const perPara = Math.ceil(pairs.length / 3);
+    const paras = [];
+    let buf = [];
 
-    let html;
-    if (!feedback) {
-      html = '<div class="s-no-feedback">이 문장의 피드백 데이터가 아직 준비되지 않았습니다. 파이프라인이 연결되면 자동으로 생성됩니다.</div>';
-    } else {
-      const comments = feedback.comments.map(c =>
-        `<div class="s-comment"><span class="s-comment-icon">&#x1f4a1;</span>${esc(c)}</div>`
-      ).join('');
-      html = `<div class="s-diff">
-        <div class="s-diff-del">- ${esc(userText)}</div>
-        <div class="s-diff-add">+ ${esc(feedback.ideal)}</div>
-      </div>${comments}`;
+    pairs.forEach((p, i) => {
+      buf.push(wrapWords(tab === 'en' ? p.en : p.ko));
+      if (buf.length >= perPara || i === pairs.length - 1) {
+        paras.push(buf.join(' '));
+        buf = [];
+      }
+    });
+
+    let html = paras.map(p => `<p>${p}</p>`).join('');
+    if (a.imageUrl) {
+      html += `<div class="thumb"><img src="${esc(a.imageUrl)}" alt="${esc(a.title)}" onerror="this.parentElement.style.display='none'"></div>`;
+    }
+    $('article').innerHTML = html;
+  }
+
+  function renderSentences() {
+    const a = articles[day];
+    const src = tab === 'en' ? 'en' : 'ko';
+    const d = day, t = tab;
+
+    $('sentences').innerHTML = a.content.map((pair, i) => {
+      const saved = store.inputs[key(d, t, i)] || '';
+      const res = store.results[key(d, t, i)] || '';
+      return `
+      <div class="s-block" id="sb${i}">
+        <div class="s-text"><span class="s-num">${i + 1}</span>${esc(pair[src])}</div>
+        <div class="s-row">
+          <textarea class="s-input" id="si${i}" rows="1" data-idx="${i}">${esc(saved)}</textarea>
+          <button class="s-btn" id="sb${i}b" data-correct="${i}" title="AI 교정">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5z"/><path d="M19 2l.5 1.5L21 4l-1.5.5L19 6l-.5-1.5L17 4l1.5-.5z"/><path d="M5 18l.5 1.5L7 20l-1.5.5L5 22l-.5-1.5L3 20l1.5-.5z"/></svg>
+          </button>
+        </div>
+        <div class="s-loading" id="sl${i}"><div class="s-spinner"></div> 분석 중...</div>
+        <div class="s-result${res ? ' show' : ''}" id="sr${i}">${res}</div>
+      </div>`;
+    }).join('');
+
+    // 저장된 입력이 있으면 높이 조정
+    a.content.forEach((_, i) => {
+      const el = $('si' + i);
+      if (el?.value) autoResize(el);
+    });
+  }
+
+  function renderAll() {
+    renderSidebar();
+    renderMeta();
+    renderArticle();
+    renderSentences();
+    hideTooltip();
+  }
+
+  // ── Actions ──
+  function autoResize(el) {
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 80) + 'px';
+  }
+
+  function selectDay(i) { day = i; renderAll(); }
+
+  function switchTab(t) {
+    tab = t;
+    document.querySelectorAll('#tabs .tab').forEach(el => el.classList.toggle('on', el.dataset.tab === t));
+    renderAll();
+  }
+
+  // ── Correction ──
+  function correct(idx) {
+    const input = $('si' + idx);
+    if (!input?.value.trim()) return toast('먼저 번역/영작을 입력해 주세요.');
+
+    const btn = $(`sb${idx}b`);
+    const loading = $('sl' + idx);
+    const result = $('sr' + idx);
+    btn.disabled = true;
+    result.classList.remove('show');
+    result.innerHTML = '';
+    loading.classList.add('show');
+
+    setTimeout(() => {
+      loading.classList.remove('show');
+      const text = input.value.trim();
+      const pair = articles[day].content[idx];
+      const fb = tab === 'en' ? pair.feedback_en_to_ko : pair.feedback_ko_to_en;
+
+      let html;
+      if (!fb) {
+        html = '<div class="s-empty">피드백 데이터가 아직 준비되지 않았습니다.</div>';
+      } else {
+        const tips = fb.comments.map(c => `<div class="s-tip"><b>&#x1f4a1;</b>${esc(c)}</div>`).join('');
+        html = `<div class="s-diff"><div class="s-diff-del">- ${esc(text)}</div><div class="s-diff-add">+ ${esc(fb.ideal)}</div></div>${tips}`;
+      }
+
+      result.innerHTML = html;
+      result.classList.add('show');
+      btn.disabled = false;
+      btn.classList.remove('pulse-pop');
+      void btn.offsetWidth;
+      btn.classList.add('pulse-pop');
+
+      store.results[key(day, tab, idx)] = html;
+      saveStore();
+    }, 1600);
+  }
+
+  // ── Tooltip ──
+  function hideTooltip() {
+    const tip = $('tip');
+    tip.classList.remove('show');
+    tip.style.display = 'none';
+  }
+
+  function showTooltip(span, word, meaning) {
+    tipWord = word;
+    tipMeaning = meaning || '';
+
+    $('tipW').textContent = word;
+    $('tipArr').style.display = meaning ? '' : 'none';
+    $('tipM').style.display = meaning ? '' : 'none';
+    if (meaning) $('tipM').textContent = meaning;
+    $('tipBtn').textContent = meaning ? '+ 단어장에 추가' : '+ 단어장에 추가 (단어만)';
+
+    const tip = $('tip');
+    const rect = span.getBoundingClientRect();
+    let left = rect.left + rect.width / 2 - 120;
+    let top = rect.bottom + 10;
+    if (left < 10) left = 10;
+    if (left + 260 > innerWidth) left = innerWidth - 270;
+    if (top + 160 > innerHeight) top = rect.top - 140;
+
+    tip.style.left = left + 'px';
+    tip.style.top = top + 'px';
+    tip.style.display = 'block';
+    tip.classList.remove('show');
+    void tip.offsetWidth;
+    tip.classList.add('show');
+  }
+
+  // ── Vocab CRUD ──
+  async function addToVocab() {
+    hideTooltip();
+    try {
+      const { error } = await sb.from('vocabulary').insert({ word: tipWord, meaning: tipMeaning, context: '' });
+      if (error) return toast('저장 실패: ' + error.message);
+      toast(`"${tipWord}" 단어장에 추가`);
+    } catch {
+      toast('서버 연결 실패');
+    }
+  }
+
+  async function loadVocab() {
+    const list = $('vocabList');
+    list.innerHTML = '<div class="v-empty">불러오는 중...</div>';
+    try {
+      const { data, error } = await sb.from('vocabulary').select('*').order('created_at', { ascending: false });
+      if (error) return list.innerHTML = `<div class="v-empty">조회 실패: ${error.message}</div>`;
+      if (!data?.length) return list.innerHTML = '<div class="v-empty">저장된 단어가 없습니다.<br>아티클에서 단어를 클릭하여 추가해 보세요.</div>';
+      list.innerHTML = data.map(v => `
+        <div class="v-item">
+          <div class="v-info">
+            <div class="v-word">${esc(v.word)}</div>
+            <div class="v-mean">${esc(v.meaning)}</div>
+            ${v.context ? `<div class="v-ctx">${esc(v.context)}</div>` : ''}
+          </div>
+          <button class="v-del" data-vid="${v.id}">삭제</button>
+        </div>`).join('');
+    } catch {
+      list.innerHTML = '<div class="v-empty">서버에 연결할 수 없습니다.</div>';
+    }
+  }
+
+  async function deleteVocab(id) {
+    try {
+      const { error } = await sb.from('vocabulary').delete().eq('id', id);
+      if (error) return toast('삭제 실패: ' + error.message);
+      toast('단어가 삭제되었습니다.');
+      await loadVocab();
+    } catch {
+      toast('서버 연결 실패');
+    }
+  }
+
+  function openVocab() { $('vocabOverlay').classList.add('show'); loadVocab(); }
+  function closeVocab() { $('vocabOverlay').classList.remove('show'); }
+
+  // ── Toast ──
+  function toast(msg) {
+    const t = $('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }
+
+  // ── Event Delegation ──
+  function initEvents() {
+    // 단어 클릭 → 툴팁
+    document.addEventListener('click', e => {
+      if (e.target.closest('.tooltip-btn') || e.target.closest('.tooltip')) return;
+      const span = e.target.closest('.w');
+      if (!span) return hideTooltip();
+      const word = span.dataset.word;
+      if (!word) return hideTooltip();
+      const match = lookup(word);
+      showTooltip(span, match?.word || word, match?.meaning || null);
+    });
+
+    // 사이드바
+    $('sidebar').addEventListener('click', e => {
+      const pill = e.target.closest('.pill');
+      if (pill) selectDay(+pill.dataset.day);
+    });
+
+    // 탭 전환
+    $('tabs').addEventListener('click', e => {
+      const t = e.target.closest('.tab');
+      if (t) switchTab(t.dataset.tab);
+    });
+
+    // 문장 입력 + AI 교정 (이벤트 위임)
+    $('sentences').addEventListener('input', e => {
+      const el = e.target.closest('.s-input');
+      if (!el) return;
+      autoResize(el);
+      store.inputs[key(day, tab, +el.dataset.idx)] = el.value;
+      saveStore();
+    });
+
+    $('sentences').addEventListener('click', e => {
+      const btn = e.target.closest('[data-correct]');
+      if (btn) correct(+btn.dataset.correct);
+    });
+
+    // 단어장 추가
+    $('tipBtn').addEventListener('click', addToVocab);
+
+    // 단어장 모달
+    $('vocabOverlay').addEventListener('click', e => {
+      if (e.target === $('vocabOverlay')) closeVocab();
+      const del = e.target.closest('.v-del');
+      if (del) deleteVocab(+del.dataset.vid);
+    });
+
+    $('vocabClose').addEventListener('click', closeVocab);
+  }
+
+  // ── Init ──
+  async function init() {
+    loadStore();
+    initEvents();
+    try {
+      articles = await fetchArticles();
+    } catch (e) {
+      console.error('fetch error:', e);
+      articles = [];
     }
 
-    result.innerHTML = html;
-    result.classList.add('show');
-    btn.disabled = false;
-    btn.classList.remove('pulse-pop');
-    void btn.offsetWidth;
-    btn.classList.add('pulse-pop');
-    saveResult(currentDay, currentTab, idx, html);
-  }, 1600);
-}
+    $('loader').classList.add('hide');
+    $('hdr').style.display = '';
+    $('app').style.display = '';
 
-// ── Tooltip (event delegation on document) ──
-function hideTooltip() {
-  const tip = document.getElementById('tooltip');
-  tip.classList.remove('show');
-  tip.style.display = 'none';
-}
-function showTooltip(span, word, meaning) {
-  selectedWord = word;
-  selectedMeaning = meaning || '';
-  selectedContext = '';
-
-  const tip = document.getElementById('tooltip');
-  document.getElementById('tooltipWord').textContent = word;
-  const arrowEl = document.querySelector('.tooltip-arrow');
-  const meaningEl = document.getElementById('tooltipMeaning');
-  const btnEl = document.querySelector('.tooltip-btn');
-
-  if (meaning) {
-    arrowEl.style.display = '';
-    meaningEl.style.display = '';
-    meaningEl.textContent = meaning;
-    btnEl.textContent = '+ 단어장에 추가';
-  } else {
-    arrowEl.style.display = 'none';
-    meaningEl.style.display = 'none';
-    btnEl.textContent = '+ 단어장에 추가 (단어만)';
-  }
-
-  const rect = span.getBoundingClientRect();
-  let left = rect.left + rect.width/2 - 120, top = rect.bottom + 10;
-  if (left < 10) left = 10;
-  if (left + 260 > window.innerWidth) left = window.innerWidth - 270;
-  if (top + 160 > window.innerHeight) top = rect.top - 140;
-  tip.style.left = left + 'px';
-  tip.style.top = top + 'px';
-  tip.style.display = 'block';
-  tip.classList.remove('show');
-  void tip.offsetWidth;
-  tip.classList.add('show');
-}
-document.addEventListener('click', function(e) {
-  if (e.target.closest('.tooltip-btn')) return;
-  if (e.target.closest('.tooltip')) return;
-
-  const span = e.target.closest('.w');
-  if (!span) { hideTooltip(); return; }
-
-  const word = span.getAttribute('data-word');
-  if (!word) { hideTooltip(); return; }
-
-  const match = findMatchInPairs(word);
-  showTooltip(span, match ? match.displayWord : word, match ? match.meaning : null);
-});
-
-// ── Supabase CRUD ──
-async function addToVocab() {
-  hideTooltip();
-  try {
-    const { error } = await sb.from('vocabulary').insert({ word:selectedWord, meaning:selectedMeaning, context:selectedContext });
-    if (error) { showToast('저장 실패: '+error.message); }
-    else {
-      showToast(`"${selectedWord}" 단어장에 추가되었습니다.`);
-      const tooltipBtn = document.querySelector('.tooltip-btn');
-      if (tooltipBtn) { tooltipBtn.classList.remove('pulse-pop'); void tooltipBtn.offsetWidth; tooltipBtn.classList.add('pulse-pop'); }
+    if (!articles.length) {
+      $('sidebar').innerHTML = '';
+      $('meta').innerHTML = '<div style="text-align:center;padding:24px;color:var(--text-muted);font-size:13px">오늘의 아티클이 아직 준비되지 않았습니다.<br>매일 오전 7시에 새로운 기사가 업데이트됩니다.</div>';
+      $('article').innerHTML = '';
+      $('sentences').innerHTML = '';
+      return;
     }
-  } catch(e) {
-    showToast('서버 연결 실패 — Supabase 프로젝트 상태를 확인해 주세요.');
-    console.error('addToVocab network error:', e);
+    renderAll();
   }
-}
-async function openVocabModal() {
-  document.getElementById('vocabModal').classList.add('show');
-  await loadVocab();
-}
-function closeVocabModal() { document.getElementById('vocabModal').classList.remove('show'); }
-document.getElementById('vocabModal').addEventListener('click', function(e) { if (e.target===this) closeVocabModal(); });
 
-async function loadVocab() {
-  const list = document.getElementById('vocabList');
-  list.innerHTML = '<div class="vocab-empty">불러오는 중...</div>';
-  let data, error;
-  try {
-    ({data, error} = await sb.from('vocabulary').select('*').order('created_at',{ascending:false}));
-  } catch(e) {
-    list.innerHTML = '<div class="vocab-empty">서버에 연결할 수 없습니다.<br>Supabase 프로젝트 상태를 확인해 주세요.</div>';
-    console.error('loadVocab network error:', e);
-    return;
-  }
-  if (error) { list.innerHTML = `<div class="vocab-empty">조회 실패: ${error.message}</div>`; return; }
-  if (!data || data.length===0) {
-    list.innerHTML = '<div class="vocab-empty">저장된 단어가 없습니다.<br>아티클에서 단어를 클릭하여 추가해 보세요.</div>';
-    return;
-  }
-  list.innerHTML = data.map(item => `
-    <div class="vocab-item">
-      <div class="vocab-info">
-        <div class="vocab-word">${esc(item.word)}</div>
-        <div class="vocab-meaning">${esc(item.meaning)}</div>
-        ${item.context ? `<div class="vocab-ctx">${esc(item.context)}</div>` : ''}
-      </div>
-      <button class="vocab-del" onclick="deleteVocab(${item.id})">삭제</button>
-    </div>`).join('');
-}
-async function deleteVocab(id) {
-  try {
-    const { error } = await sb.from('vocabulary').delete().eq('id', id);
-    if (error) { showToast('삭제 실패: '+error.message); }
-    else { showToast('단어가 삭제되었습니다.'); await loadVocab(); }
-  } catch(e) {
-    showToast('서버 연결 실패 — Supabase 프로젝트 상태를 확인해 주세요.');
-    console.error('deleteVocab network error:', e);
-  }
-}
+  init();
 
-// ── Utilities ──
-function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2500);
-}
-
-// ── Init ──
-async function init() {
-  loadStore();
-  try {
-    articles = await fetchArticles();
-  } catch(e) {
-    console.error('fetchArticles error:', e);
-    articles = [];
-  }
-  document.getElementById('loadingScreen').classList.add('hide');
-  document.getElementById('appHeader').style.display = '';
-  document.getElementById('appLayout').style.display = '';
-  if (articles.length === 0) {
-    document.getElementById('sidebar').innerHTML = '';
-    document.getElementById('metaBox').innerHTML = '<div style="text-align:center;padding:24px;color:var(--text-muted);font-size:13px">오늘의 아티클이 아직 준비되지 않았습니다.<br>매일 오전 7시에 새로운 기사가 업데이트됩니다.</div>';
-    document.getElementById('articleContent').innerHTML = '';
-    document.getElementById('sentenceList').innerHTML = '';
-    return;
-  }
-  renderSidebar(); renderArticle(); renderMeta(); renderSentences();
-}
-init();
+  return { openVocab, closeVocab };
+})();
 </script>
 </body>
 </html>

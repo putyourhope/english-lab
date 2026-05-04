@@ -1,9 +1,4 @@
-"""
-IEL 백엔드 파이프라인
-- RSS에서 IT 기사 수집
-- LLM으로 en/ko 문장 페어 + feedback 생성
-- Supabase articles 테이블에 Insert
-"""
+"""IEL Pipeline — RSS 수집 → LLM 변환 → Supabase 저장"""
 
 import os
 import re
@@ -15,15 +10,11 @@ from datetime import datetime, timezone
 from openai import OpenAI
 from supabase import create_client
 
-# ── 환경변수 ──
+# ── Config ──
 SUPABASE_URL = os.environ["SUPABASE_URL"]
 SUPABASE_KEY = os.environ["SUPABASE_KEY"]
 OPENAI_API_KEY = os.environ["OPENAI_API_KEY"]
 
-sb = create_client(SUPABASE_URL, SUPABASE_KEY)
-llm = OpenAI(api_key=OPENAI_API_KEY)
-
-# ── RSS 피드 목록 ──
 RSS_FEEDS = [
     "https://techcrunch.com/feed/",
     "https://www.theverge.com/rss/index.xml",
@@ -32,189 +23,136 @@ RSS_FEEDS = [
 ]
 
 MAX_ARTICLES = 3
-API_COOLDOWN = 20  # 초
+API_COOLDOWN = 20
+IMAGE_SKIP = ["tracking", "pixel", "1x1", "spacer", "blank", "avatar", "icon", "logo", "badge"]
+HTTP_HEADERS = {"User-Agent": "Mozilla/5.0 (compatible; IELBot/1.0)"}
 
+sb = create_client(SUPABASE_URL, SUPABASE_KEY)
+llm = OpenAI(api_key=OPENAI_API_KEY)
 
-def fetch_rss_entries():
-    """RSS 피드에서 최신 기사 목록 수집"""
-    entries = []
-    for url in RSS_FEEDS:
-        try:
-            feed = feedparser.parse(url)
-            for entry in feed.entries[:5]:
-                entries.append({
-                    "title": entry.get("title", ""),
-                    "link": entry.get("link", ""),
-                    "summary": entry.get("summary", ""),
-                    "source": feed.feed.get("title", url),
-                    "published": entry.get("published", ""),
-                    "image_url": extract_image(entry),
-                })
-        except Exception as e:
-            print(f"[RSS] {url} 실패: {e}")
-    return entries
+# 토큰 최적화를 위해 최소한의 구조 + 규칙만 전달
+SYSTEM_PROMPT = """You are an EN-KO bilingual IT education content creator.
+Return a JSON object for the given article:
+
+{"title_ko":"한글제목","summary_ko":"200자이내 한글요약","difficulty":5,"image_keyword":"topic","content":[{"en":"English.","ko":"한글.","word_map":{"word":"뜻"},"feedback_en_to_ko":{"ideal":"자연스러운 번역","comments":["팁1","팁2"]},"feedback_ko_to_en":{"ideal":"Natural translation.","comments":["tip1","tip2"]}}]}
+
+Rules:
+1. content: exactly 6-8 sentence pair objects (one sentence each, never merge)
+2. word_map: 5-8 lowercase EN keys → KO values per sentence, context-specific (not dictionary definitions)
+3. difficulty: 1-10 scale
+4. Each feedback: 2 comments, ideal must differ meaningfully from literal ko/en
+5. Valid JSON only, no markdown fences"""
 
 
 def extract_image(entry):
-    """RSS 엔트리에서 대표 이미지 URL 추출 (원본 기사 이미지 우선)"""
-    # 1. media_content (가장 신뢰도 높음)
-    media = entry.get("media_content", [])
-    if media:
-        for m in media:
-            url = m.get("url", "")
-            if url and any(ext in url.lower() for ext in [".jpg", ".jpeg", ".png", ".webp", ".gif"]):
-                return url
-        if media[0].get("url"):
-            return media[0]["url"]
+    """RSS 엔트리에서 이미지 URL 추출 (media → thumbnail → enclosure → HTML)"""
+    for m in entry.get("media_content", []):
+        url = m.get("url", "")
+        if url:
+            return url
 
-    # 2. media_thumbnail
     thumbs = entry.get("media_thumbnail", [])
     if thumbs and thumbs[0].get("url"):
         return thumbs[0]["url"]
 
-    # 3. enclosure (일부 RSS에서 사용)
-    enclosures = entry.get("enclosures", [])
-    for enc in enclosures:
-        enc_type = enc.get("type", "")
-        if enc_type.startswith("image/") and enc.get("href"):
+    for enc in entry.get("enclosures", []):
+        if enc.get("type", "").startswith("image/") and enc.get("href"):
             return enc["href"]
 
-    links = entry.get("links", [])
-    for link in links:
+    for link in entry.get("links", []):
         if link.get("type", "").startswith("image/") and link.get("href"):
             return link["href"]
 
-    # 4. content / summary HTML 에서 <img> 추출
-    html_parts = []
-    content_list = entry.get("content", [])
-    if content_list:
-        for c in content_list:
-            html_parts.append(c.get("value", ""))
+    # HTML <img> 추출 (트래킹 픽셀 필터링)
+    html_parts = [c.get("value", "") for c in entry.get("content", [])]
     html_parts.append(entry.get("summary", ""))
-    full_html = " ".join(html_parts)
-
-    img_matches = re.findall(r'<img[^>]+src=["\']([^"\']+)["\']', full_html)
-    for img_url in img_matches:
-        if any(skip in img_url.lower() for skip in ["tracking", "pixel", "1x1", "spacer", "blank", "avatar", "icon", "logo", "badge"]):
-            continue
-        return img_url
+    for img_url in re.findall(r'<img[^>]+src=["\']([^"\']+)["\']', " ".join(html_parts)):
+        if not any(skip in img_url.lower() for skip in IMAGE_SKIP):
+            return img_url
 
     return None
-
-
-def filter_new_entries(entries):
-    """이미 DB에 있는 기사를 제외"""
-    try:
-        existing = sb.table("articles").select("source_url").execute()
-        existing_urls = {r["source_url"] for r in (existing.data or [])}
-    except Exception as e:
-        print(f"[DB] 기존 기사 조회 실패: {e}")
-        existing_urls = set()
-
-    return [e for e in entries if e["link"] not in existing_urls]
-
-
-SYSTEM_PROMPT = """You are an English-Korean bilingual education content creator for IT professionals.
-Given an article title, link, and summary, produce a JSON object with this exact structure:
-
-{
-  "title_ko": "한글 제목",
-  "summary_ko": "200자 이내 한글 요약",
-  "difficulty": 5,
-  "image_keyword": "one or two English words for article topic",
-  "content": [
-    {
-      "en": "Original English sentence.",
-      "ko": "한글 번역.",
-      "word_map": {
-        "english_word": "한글뜻",
-        "another_word": "다른뜻"
-      },
-      "feedback_en_to_ko": {
-        "ideal": "더 자연스러운 한글 번역 모범 답안",
-        "comments": ["번역 팁 1", "번역 팁 2"]
-      },
-      "feedback_ko_to_en": {
-        "ideal": "More natural English back-translation.",
-        "comments": ["영작 팁 1", "영작 팁 2"]
-      }
-    }
-  ]
-}
-
-CRITICAL RULES:
-- Summarize the article into 2-3 paragraphs. Each paragraph must contain 3-4 sentences.
-- The content array must contain 8 to 10 sentence pair objects in total. No more, no less.
-- Each sentence pair is one sentence — do NOT merge multiple sentences into one object.
-- word_map: For each sentence pair, extract 5-8 key vocabulary words that learners should know. Keys are lowercase English words from the sentence, values are the corresponding Korean translation AS USED IN THIS SPECIFIC SENTENCE CONTEXT. Example: {"assembled": "구축한", "portfolio": "포트폴리오", "diverse": "다양한"}. The mapping must reflect how the word is actually translated in the ko sentence, not a generic dictionary definition.
-- difficulty is 1-10 based on vocabulary/grammar complexity.
-- Each feedback has exactly 2 comments.
-- ideal translations should differ meaningfully from the literal ko/en to teach nuance.
-- image_keyword: 1-2 simple English words describing the article's core topic (e.g. "artificial intelligence", "remote work", "cybersecurity"). Used as a fallback image search term.
-- All output must be valid JSON. No markdown fences."""
-
-
-def generate_article_data(entry):
-    """LLM으로 기사를 학습용 데이터로 변환"""
-    user_msg = f"""Title: {entry['title']}
-URL: {entry['link']}
-Source: {entry['source']}
-Summary: {entry['summary'][:500]}
-
-Please create the IEL learning content JSON for this article."""
-
-    resp = llm.chat.completions.create(
-        model="gpt-4o",
-        messages=[
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": user_msg},
-        ],
-        temperature=0.7,
-        response_format={"type": "json_object"},
-    )
-
-    return json.loads(resp.choices[0].message.content)
 
 
 def fetch_og_image(url):
     """기사 페이지에서 og:image 메타태그 추출"""
+    if not url:
+        return None
     try:
-        resp = requests.get(url, timeout=10, headers={
-            "User-Agent": "Mozilla/5.0 (compatible; IELBot/1.0)"
-        })
+        resp = requests.get(url, timeout=10, headers=HTTP_HEADERS)
         resp.raise_for_status()
         match = re.search(
-            r'<meta[^>]+property=["\']og:image["\'][^>]+content=["\']([^"\']+)["\']',
-            resp.text
+            r'<meta[^>]+(?:property=["\']og:image["\'][^>]+content=["\']([^"\']+)["\']'
+            r'|content=["\']([^"\']+)["\'][^>]+property=["\']og:image["\'])',
+            resp.text,
         )
-        if not match:
-            match = re.search(
-                r'<meta[^>]+content=["\']([^"\']+)["\'][^>]+property=["\']og:image["\']',
-                resp.text
-            )
         if match:
-            img_url = match.group(1)
-            if img_url.startswith("http"):
-                print(f"  [OG] og:image 발견: {img_url[:80]}")
-                return img_url
+            img = match.group(1) or match.group(2)
+            if img and img.startswith("http"):
+                print(f"  [OG] {img[:80]}")
+                return img
     except Exception as e:
-        print(f"  [OG] 페이지 접근 실패: {e}")
+        print(f"  [OG] 실패: {e}")
     return None
 
 
-def resolve_image_url(entry, data):
-    """RSS 이미지 → og:image fallback → null"""
-    if entry.get("image_url"):
-        return entry["image_url"]
-    og = fetch_og_image(entry.get("link", ""))
-    if og:
-        return og
-    return None
+def resolve_image(entry):
+    """RSS 이미지 → og:image → None"""
+    return entry.get("image_url") or fetch_og_image(entry.get("link", ""))
 
 
-def save_to_supabase(entry, data):
-    """Supabase articles 테이블에 저장"""
-    row = {
+def fetch_rss_entries():
+    """RSS 피드에서 최신 기사 수집"""
+    entries = []
+    for feed_url in RSS_FEEDS:
+        try:
+            feed = feedparser.parse(feed_url)
+            source = feed.feed.get("title", feed_url)
+            for e in feed.entries[:5]:
+                entries.append({
+                    "title": e.get("title", ""),
+                    "link": e.get("link", ""),
+                    "summary": e.get("summary", ""),
+                    "source": source,
+                    "image_url": extract_image(e),
+                })
+        except Exception as e:
+            print(f"[RSS] {feed_url} 실패: {e}")
+    return entries
+
+
+def filter_new(entries):
+    """DB에 이미 있는 기사 제외"""
+    try:
+        existing = sb.table("articles").select("source_url").execute()
+        urls = {r["source_url"] for r in (existing.data or [])}
+    except Exception as e:
+        print(f"[DB] 조회 실패: {e}")
+        urls = set()
+    return [e for e in entries if e["link"] not in urls]
+
+
+def generate(entry):
+    """LLM으로 학습 콘텐츠 생성"""
+    resp = llm.chat.completions.create(
+        model="gpt-4o",
+        messages=[
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": (
+                f"Title: {entry['title']}\n"
+                f"URL: {entry['link']}\n"
+                f"Source: {entry['source']}\n"
+                f"Summary: {entry['summary'][:500]}"
+            )},
+        ],
+        temperature=0.7,
+        response_format={"type": "json_object"},
+    )
+    return json.loads(resp.choices[0].message.content)
+
+
+def save(entry, data):
+    """Supabase에 기사 저장"""
+    sb.table("articles").insert({
         "title": data["title_ko"],
         "summary": data["summary_ko"],
         "difficulty": data["difficulty"],
@@ -222,78 +160,59 @@ def save_to_supabase(entry, data):
         "source_url": entry["link"],
         "date": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
         "content": json.dumps(data["content"], ensure_ascii=False),
-        "image_url": resolve_image_url(entry, data),
-    }
-
-    result = sb.table("articles").insert(row).execute()
-    return result
+        "image_url": resolve_image(entry),
+    }).execute()
 
 
 def run():
-    print(f"[IEL Pipeline] 시작 — {datetime.now(timezone.utc).isoformat()}")
+    print(f"[IEL] 시작 — {datetime.now(timezone.utc).isoformat()}")
 
     entries = fetch_rss_entries()
-    print(f"[RSS] 총 {len(entries)}개 기사 수집")
+    print(f"[RSS] {len(entries)}개 수집")
 
-    new_entries = filter_new_entries(entries)
-    print(f"[FILTER] 신규 기사 {len(new_entries)}개")
-
-    targets = new_entries[:MAX_ARTICLES * 2]
+    targets = filter_new(entries)[:MAX_ARTICLES * 2]
     if not targets:
-        print("[SKIP] 처리할 새로운 기사가 없습니다.")
+        print("[SKIP] 신규 기사 없음")
         return
 
-    print(f"[PLAN] 최대 {len(targets)}개 중 {MAX_ARTICLES}개 성공 목표")
-
-    # LLM 처리: 성공한 기사만 모아서 정확히 3개까지만
+    # LLM 변환 (최대 MAX_ARTICLES개 성공할 때까지)
     ready = []
-
     for i, entry in enumerate(targets):
         if len(ready) >= MAX_ARTICLES:
             break
-
-        print(f"[{i+1}/{len(targets)}] 처리 중: {entry['title']}")
-
+        print(f"[{i+1}/{len(targets)}] {entry['title']}")
         try:
-            data = generate_article_data(entry)
-            print(f"  [LLM] 변환 완료 — 문장 {len(data.get('content',[]))}개")
+            data = generate(entry)
+            print(f"  [LLM] {len(data.get('content', []))}문장")
             ready.append((entry, data))
         except Exception as e:
-            print(f"  [ERROR/LLM] {e}")
-            if i < len(targets) - 1:
-                print(f"  [WAIT] {API_COOLDOWN}초 대기 후 다음 기사로...")
-                time.sleep(API_COOLDOWN)
-            continue
+            print(f"  [ERR] {e}")
 
-        if len(ready) < MAX_ARTICLES and i < len(targets) - 1:
-            print(f"  [WAIT] {API_COOLDOWN}초 대기...")
+        if i < len(targets) - 1 and len(ready) < MAX_ARTICLES:
             time.sleep(API_COOLDOWN)
 
     if not ready:
-        print("[SKIP] LLM 처리에 성공한 기사가 없습니다.")
+        print("[SKIP] LLM 성공 0건")
         return
 
-    print(f"\n[READY] 성공 {len(ready)}개 — DB 초기화 후 Insert 시작")
-
-    # 기존 데이터 전체 삭제
+    # DB 교체: 전체 삭제 → 새 기사 삽입
+    print(f"\n[DB] {len(ready)}개 저장 시작")
     try:
         sb.table("articles").delete().neq("id", 0).execute()
-        print("[DB] 기존 articles 전체 삭제 완료")
     except Exception as e:
-        print(f"[ERROR/DB] 기존 데이터 삭제 실패: {e}")
+        print(f"[ERR] 삭제 실패: {e}")
         return
 
-    # 성공한 기사만 Insert
-    success = 0
+    ok = 0
     for entry, data in ready:
         try:
-            save_to_supabase(entry, data)
-            print(f"  [DB] 저장 완료: {data['title_ko']}")
-            success += 1
+            save(entry, data)
+            print(f"  [OK] {data['title_ko']}")
+            ok += 1
         except Exception as e:
-            print(f"  [ERROR/DB] {e}")
+            print(f"  [ERR] {e}")
 
-    print(f"\n[IEL Pipeline] 완료 — {success}개 저장")
+    print(f"\n[IEL] 완료 — {ok}/{len(ready)}개 저장")
 
 
 if __name__ == "__main__":
